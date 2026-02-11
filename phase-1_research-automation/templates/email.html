@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  body { margin: 0; padding: 0; background: #f4f4f7; font-family: -apple-system, 'Segoe UI', sans-serif; }
+  .container { max-width: 600px; margin: 0 auto; background: #fff; }
+  .header { background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d); padding: 28px 24px; text-align: center; }
+  .header h1 { color: #fff; margin: 0; font-size: 22px; }
+  .header p { color: rgba(255,255,255,0.85); margin: 6px 0 0; font-size: 14px; }
+  .section { padding: 20px 24px; }
+  .section-title { font-size: 16px; font-weight: 700; color: #1a2a6c; border-bottom: 2px solid #1a2a6c; padding-bottom: 6px; margin-bottom: 14px; }
+  .news-card { background: #f8f9fb; border-radius: 8px; padding: 16px; margin-bottom: 12px; border-left: 4px solid #1a2a6c; }
+  .news-rank { display: inline-block; background: #1a2a6c; color: #fff; border-radius: 50%; width: 24px; height: 24px; text-align: center; line-height: 24px; font-size: 13px; font-weight: 700; margin-right: 8px; }
+  .news-headline { font-size: 15px; font-weight: 700; color: #222; }
+  .news-summary { font-size: 13px; color: #555; margin-top: 6px; line-height: 1.6; }
+  .news-meta { margin-top: 8px; font-size: 12px; color: #888; }
+  .news-meta span { margin-right: 10px; }
+  .shorts-high { color: #e74c3c; font-weight: 700; }
+  .shorts-medium { color: #f39c12; font-weight: 700; }
+  .shorts-low { color: #95a5a6; }
+  .korean-card { background: #fff8f0; border-radius: 8px; padding: 14px; margin-bottom: 10px; border-left: 4px solid #e67e22; }
+  .korean-name { font-weight: 700; color: #e67e22; font-size: 14px; }
+  .korean-team { font-size: 12px; color: #888; margin-left: 6px; }
+  .korean-result { font-size: 13px; color: #444; margin-top: 4px; }
+  .shorts-box { background: #eef6ff; border-radius: 8px; padding: 16px; border-left: 4px solid #3498db; }
+  .shorts-topic { font-size: 15px; font-weight: 700; color: #2c3e50; }
+  .shorts-hook { font-size: 13px; color: #555; margin-top: 8px; padding: 10px; background: #fff; border-radius: 6px; font-style: italic; }
+  .footer { text-align: center; padding: 16px; font-size: 11px; color: #aaa; border-top: 1px solid #eee; }
+</style>
+</head>
+<body>
+<div class="container">
+  <!-- 헤더 -->
+  <div class="header">
+    <h1>MLB Daily AI Creator</h1>
+    <p>{{ data.date }} 오늘의 핵심 뉴스</p>
+  </div>
+
+  <!-- TOP 뉴스 -->
+  <div class="section">
+    <div class="section-title">핵심 뉴스 TOP {{ data.top_news | length }}</div>
+    {% for news in data.top_news %}
+    <div class="news-card">
+      <div>
+        <span class="news-rank">{{ news.rank }}</span>
+        <span class="news-headline">{{ news.headline }}</span>
+      </div>
+      <div class="news-summary">{{ news.summary }}</div>
+      <div class="news-meta">
+        {% if news.players %}<span>선수: {{ news.players | join(', ') }}</span>{% endif %}
+        {% if news.stats %}<span>{% for k, v in news.stats.items() %}{{ k }}: {{ v }}{% if not loop.last %}, {% endif %}{% endfor %}</span>{% endif %}
+        <span class="shorts-{{ news.shorts_potential }}">숏폼: {{ news.shorts_potential | upper }}</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- 한국 선수 -->
+  {% if data.korean_players %}
+  <div class="section">
+    <div class="section-title">한국 선수 동향</div>
+    {% for player in data.korean_players %}
+    <div class="korean-card">
+      <span class="korean-name">{{ player.name }}</span>
+      <span class="korean-team">{{ player.team }}</span>
+      <div class="korean-result">{{ player.result }}</div>
+      {% if player.highlight %}<div style="font-size:12px; color:#e67e22; margin-top:4px;">{{ player.highlight }}</div>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- 숏폼 추천 -->
+  {% if data.recommended_shorts_topic %}
+  <div class="section">
+    <div class="section-title">숏폼 콘텐츠 추천</div>
+    <div class="shorts-box">
+      <div class="shorts-topic">{{ data.recommended_shorts_topic.topic }}</div>
+      <div style="font-size:13px; color:#555; margin-top:6px;">{{ data.recommended_shorts_topic.reason }}</div>
+      {% if data.recommended_shorts_topic.script_hook %}
+      <div class="shorts-hook">"{{ data.recommended_shorts_topic.script_hook }}"</div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- 푸터 -->
+  <div class="footer">
+    MLB Daily AI Creator &middot; Powered by Gemini + GitHub Actions
+  </div>
+</div>
+</body>
+</html>
