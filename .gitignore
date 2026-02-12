@@ -1,0 +1,39 @@
+# === 환경변수 & 시크릿 ===
+.env
+*.env
+token.json
+client_secret.json
+
+# === Python ===
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+*.egg
+.venv/
+venv/
+
+# === 생성 파일 (영상/오디오/이미지) ===
+*.mp4
+*.mp3
+*.wav
+*.avi
+*.mov
+
+# === Phase별 출력/임시 디렉토리 ===
+outputs/
+temp/
+history/
+scripts/
+
+# === IDE / OS ===
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
