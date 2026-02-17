@@ -1,6 +1,6 @@
 """
 MLB Daily AI Creator — Phase 1 파이프라인
-리서치 → 포맷 → 이메일 전송
+리서치(7AM-7AM) → 포맷 → 이메일 전송 → Supabase(mlb_daily_news) 업로드
 """
 
 import os
@@ -16,7 +16,7 @@ sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8")
 
 from dotenv import load_dotenv
 
-# .env 로드 (로컬 실행용, GitHub Actions에서는 secrets 사용)
+# .env 로드
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 from researcher import research_mlb_news
@@ -40,10 +40,24 @@ def main():
         print("[ERROR] GMAIL_ADDRESS / GMAIL_APP_PASSWORD 환경변수가 설정되지 않았습니다.")
         sys.exit(1)
 
+    # Supabase 환경변수 (선택)
+    supabase_url = os.environ.get("SUPABASE_URL")
+    supabase_key = os.environ.get("SUPABASE_SERVICE_KEY")
+    has_supabase = bool(supabase_url and supabase_key)
+    total_steps = 4 if has_supabase else 3
+
     # 1. 리서치
-    print("[1/3] Gemini API로 MLB 뉴스 수집 중...")
+    print(f"[1/{total_steps}] Gemini API로 MLB 뉴스 수집 중 (Strict Daily)...")
     news_data = research_mlb_news(api_key)
-    print(f"  → 뉴스 {len(news_data.get('top_news', []))}건 수집 완료")
+    
+    # 결과 요약 출력
+    main_count = len(news_data.get('main_news', []))
+    trans_count = len(news_data.get('transactions', []))
+    prospect_count = len(news_data.get('prospects', []))
+    
+    print(f"  → Main News: {main_count}건")
+    print(f"  → Transactions: {trans_count}건")
+    print(f"  → Prospects: {prospect_count}건 수집 완료")
 
     # 디버그: JSON 저장
     out_dir = Path(__file__).resolve().parent.parent / "outputs"
@@ -54,13 +68,24 @@ def main():
     print(f"  → JSON 저장: outputs/{today}.json")
 
     # 2. 포맷
-    print("[2/3] HTML 이메일 포맷 생성 중...")
+    print(f"[2/{total_steps}] HTML 이메일 포맷 생성 중...")
     subject, html_body = format_email(news_data)
     print(f"  → 제목: {subject}")
 
     # 3. 전송
-    print(f"[3/3] 이메일 전송 중 → {recipient}")
+    print(f"[3/{total_steps}] 이메일 전송 중 → {recipient}")
     send_email(gmail_addr, gmail_pw, recipient, subject, html_body)
+
+    # 4. Supabase 업로드 (선택)
+    if has_supabase:
+        print(f"[4/{total_steps}] Supabase에 뉴스 데이터 업로드 중 (mlb_news)...")
+        try:
+            from uploader import upload_to_supabase
+            upload_to_supabase(news_data, supabase_url, supabase_key)
+        except Exception as e:
+            print(f"  [WARN] Supabase 업로드 실패 (이메일은 정상 전송됨): {e}")
+    else:
+        print("[SKIP] SUPABASE_URL 미설정 — Supabase 업로드 건너뜀")
 
     print(f"[DONE] 파이프라인 완료")
 
