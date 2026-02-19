@@ -12,7 +12,7 @@ from google.genai import types
 
 TONE_PROMPTS = {
     "유머러스": "당신은 유머감각이 넘치는 MLB 유튜브 크리에이터입니다. 친근하고 유머러스하게, 드립과 비유를 활용하세요.",
-    "분석적": "당신은 데이터 중심의 MLB 분석 전문가입니다. 객관적이고 분석적으로, 수치와 비교를 강조하세요.",
+    "분석적": "당신은 데이터 중심의 MLB 분석 전문가입니다. 객관적이고 분석적으로, 사실과 맥락을 강조하세요.",
     "열정적": "당신은 열정적인 MLB 스포츠 캐스터입니다. 에너지 넘치는 실황 중계 스타일로 작성하세요.",
 }
 
@@ -27,17 +27,14 @@ SCRIPT_PROMPT = """\
 
 다음 MLB 뉴스를 기반으로 유튜브 쇼츠/릴스 대본을 작성해주세요.
 
-뉴스:
+뉴스 정보:
 - 제목: {headline}
 - 요약: {summary}
-- 선수: {players}
-- 스탯: {stats}
 
 조건:
 - 길이: {duration}초 분량 (약 {word_count}단어 기준)
 - 구조: 훅(첫 5초, 시청자를 사로잡는 한마디) -> 본문(핵심 내용) -> 마무리(구독/좋아요 유도)
-- 핵심 스탯을 자연스럽게 포함
-- 한국어로 작성
+- 제공된 뉴스 정보만을 활용하여 한국어로 작성
 
 아래 JSON 형식으로만 출력하세요:
 
@@ -65,8 +62,6 @@ def generate_script(
         tone_description=TONE_PROMPTS.get(tone, TONE_PROMPTS["유머러스"]),
         headline=news.get("headline", ""),
         summary=news.get("summary", ""),
-        players=", ".join(news.get("players", [])) or "없음",
-        stats=json.dumps(news.get("stats", {}), ensure_ascii=False) or "없음",
         duration=duration,
         word_count=DURATION_WORDS.get(duration, 90),
     )
@@ -81,10 +76,20 @@ def generate_script(
     )
 
     raw_text = response.text.strip()
+    # Gemini API 응답에서 ```json ... ``` 코드 블록 추출
     json_match = re.search(r"```json\s*(.*?)\s*```", raw_text, re.DOTALL)
-    json_str = json_match.group(1) if json_match else raw_text
+    if json_match:
+        json_str = json_match.group(1)
+    else:
+        # 코드 블록이 없는 경우, 전체 텍스트를 JSON으로 간주
+        json_str = raw_text
 
-    data = json.loads(json_str)
+    try:
+        data = json.loads(json_str)
+    except json.JSONDecodeError:
+        # JSON 파싱 실패 시, Gemini가 생성한 텍스트를 그대로 반환하거나 에러 처리
+        raise ValueError(f"Failed to parse Gemini response as JSON. Response:\n{raw_text}")
+
 
     # 메타데이터 추가
     data["_meta"] = {

@@ -11,7 +11,7 @@ import streamlit as st
 from dotenv import load_dotenv
 
 # 각 Phase src를 import 경로에 추가
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "phase-1_research-automation" / "src"))
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "phase-3_video-pipeline" / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "phase-4_integration" / "src"))
 
@@ -25,12 +25,8 @@ except ImportError:
 from data_store import get_available_dates, get_news, save_script, get_scripts
 from script_generator import generate_script
 
-# Phase 1 리서치 함수
-try:
-    from researcher import research_mlb_news
-    HAS_RESEARCHER = True
-except ImportError:
-    HAS_RESEARCHER = False
+# Phase 1 리서치 함수 의존성 제거
+HAS_RESEARCHER = False
 
 # Phase 3 영상 생성
 try:
@@ -130,22 +126,7 @@ with st.sidebar:
         selected_date = None
         st.warning("수집된 뉴스가 없습니다.")
 
-    if HAS_RESEARCHER and API_KEY:
-        if st.button("지금 뉴스 수집", use_container_width=True):
-            with st.spinner("Gemini로 뉴스 수집 중..."):
-                try:
-                    import json
-                    from datetime import datetime
-                    news_data = research_mlb_news(API_KEY)
-                    out_dir = Path(__file__).resolve().parent.parent / "phase-1_research-automation" / "outputs"
-                    out_dir.mkdir(exist_ok=True)
-                    today = datetime.now().strftime("%Y-%m-%d")
-                    with open(out_dir / f"{today}.json", "w", encoding="utf-8") as f:
-                        json.dump(news_data, f, ensure_ascii=False, indent=2)
-                    st.success(f"뉴스 {len(news_data.get('top_news', []))}건 수집 완료!")
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"수집 실패: {e}")
+    st.caption("매일 오전 7시(KST)에 뉴스가 자동 수집됩니다.")
 
     st.divider()
 
@@ -291,7 +272,7 @@ if page == "원클릭 자동 생성":
 # ── 페이지 1: 뉴스 대시보드 ──
 elif page == "뉴스 대시보드":
     if not selected_date:
-        st.info("사이드바에서 '지금 뉴스 수집' 버튼을 눌러 시작하세요.")
+        st.info("사이드바에서 날짜를 선택하세요. 뉴스는 매일 오전 7시에 업데이트됩니다.")
         st.stop()
 
     news_data = get_news(selected_date)
@@ -301,7 +282,10 @@ elif page == "뉴스 대시보드":
 
     st.header(f"{selected_date} MLB 핵심 뉴스")
 
-    for news in news_data.get("top_news", []):
+    # Supabase 'news' (JSONB) 컬럼 안의 'main_news'를 참조하도록 변경
+    main_news_list = news_data.get("news", {}).get("main_news", [])
+
+    for news in main_news_list:
         potential = news.get("shorts_potential", "low")
         badge_class = f"shorts-{potential}"
 
@@ -317,10 +301,11 @@ elif page == "뉴스 대시보드":
         </div>
         """, unsafe_allow_html=True)
 
-    korean = news_data.get("korean_players", [])
-    if korean:
-        st.subheader("한국 선수 동향")
-        for player in korean:
+    # 'korean_players' 대신 'asian_players' 컬럼 참조
+    asian_players = news_data.get("asian_players", [])
+    if asian_players:
+        st.subheader("아시아 선수 동향")
+        for player in asian_players:
             st.markdown(f"""
             <div class="korean-card">
                 <strong style="color:#e67e22;">{player.get('name', '')}</strong>
@@ -330,13 +315,7 @@ elif page == "뉴스 대시보드":
             </div>
             """, unsafe_allow_html=True)
 
-    shorts = news_data.get("recommended_shorts_topic", {})
-    if shorts:
-        st.subheader("숏폼 콘텐츠 추천")
-        st.info(f"**{shorts.get('topic', '')}**\n\n{shorts.get('reason', '')}")
-        hook = shorts.get("script_hook", "")
-        if hook:
-            st.caption(f'후킹 멘트: "{hook}"')
+    # 'recommended_shorts_topic' 관련 로직 제거
 
 
 # ── 페이지 2: 대본 생성 ──
@@ -356,7 +335,8 @@ elif page == "대본 생성":
         st.warning(f"{selected_date} 뉴스 데이터가 없습니다.")
         st.stop()
 
-    top_news = news_data.get("top_news", [])
+    # Supabase 'news' (JSONB) 컬럼 안의 'main_news'를 참조하도록 변경
+    top_news = news_data.get("news", {}).get("main_news", [])
     if not top_news:
         st.warning("뉴스가 비어있습니다.")
         st.stop()

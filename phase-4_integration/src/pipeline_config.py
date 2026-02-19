@@ -15,7 +15,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 # 각 Phase .env 경로 (우선순위순)
 ENV_FILES = [
     PROJECT_ROOT / ".env",
-    PROJECT_ROOT / "phase-1_research-automation" / ".env",
+    # Phase 1 의존성 제거
     PROJECT_ROOT / "phase-2_app-prototype" / ".env",
     PROJECT_ROOT / "phase-3_video-pipeline" / ".env",
     PROJECT_ROOT / "phase-4_integration" / ".env",
@@ -30,13 +30,12 @@ def load_all_env() -> None:
 
 
 def get_config() -> dict:
-    """모든 API 키를 딕셔너리로 반환."""
+    """필요한 API 키와 설정값을 딕셔너리로 반환."""
     return {
         "GEMINI_API_KEY": os.environ.get("GEMINI_API_KEY", ""),
         "PEXELS_API_KEY": os.environ.get("PEXELS_API_KEY", ""),
-        "GMAIL_ADDRESS": os.environ.get("GMAIL_ADDRESS", ""),
-        "GMAIL_APP_PASSWORD": os.environ.get("GMAIL_APP_PASSWORD", ""),
-        "RECIPIENT_EMAIL": os.environ.get("RECIPIENT_EMAIL", ""),
+        "SUPABASE_URL": os.environ.get("SUPABASE_URL", ""),
+        "SUPABASE_SERVICE_KEY": os.environ.get("SUPABASE_SERVICE_KEY", ""),
     }
 
 

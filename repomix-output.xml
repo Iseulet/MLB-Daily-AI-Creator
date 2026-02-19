@@ -1,0 +1,5356 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+.env.example
+.github/workflows/mlb-daily.yml
+.gitignore
+CLAUDE.md
+docs/00_PROJECT-OVERVIEW.md
+docs/01_PHASE-1-PLAN.md
+docs/02_PHASE-2-PLAN.md
+docs/03_PHASE-3-PLAN.md
+docs/04_PHASE-4-PLAN.md
+docs/05_API-SETUP-GUIDE.md
+docs/06_TECH-DECISION-LOG.md
+docs/07_COST-OPTIMIZATION-RESEARCH.md
+docs/08_PROGRESS-LOG.md
+phase-1_research-automation/.env.example
+phase-1_research-automation/.gitignore
+phase-1_research-automation/GETTING-STARTED.md
+phase-1_research-automation/migrations/01_create_mlb_daily_news.sql
+phase-1_research-automation/migrations/02_update_mlb_news_table.sql
+phase-1_research-automation/requirements.txt
+phase-1_research-automation/src/debug_db.py
+phase-1_research-automation/src/formatter.py
+phase-1_research-automation/src/main.py
+phase-1_research-automation/src/notifier.py
+phase-1_research-automation/src/researcher.py
+phase-1_research-automation/src/uploader.py
+phase-1_research-automation/templates/email.html
+phase-1_research-automation/test_gemini.py
+phase-1_research-automation/test_grounding_v2.py
+phase-1_research-automation/test_grounding_v3.py
+phase-1_research-automation/test_grounding.py
+phase-2_app-prototype/.env.example
+phase-2_app-prototype/.gitignore
+phase-2_app-prototype/.streamlit/config.toml
+phase-2_app-prototype/app.py
+phase-2_app-prototype/data_store.py
+phase-2_app-prototype/requirements.txt
+phase-2_app-prototype/script_generator.py
+phase-3_video-pipeline/.env.example
+phase-3_video-pipeline/.gitignore
+phase-3_video-pipeline/requirements.txt
+phase-3_video-pipeline/src/background.py
+phase-3_video-pipeline/src/composer.py
+phase-3_video-pipeline/src/graphics.py
+phase-3_video-pipeline/src/subtitle.py
+phase-3_video-pipeline/src/tts_engine.py
+phase-3_video-pipeline/src/video_pipeline.py
+phase-4_integration/.env.example
+phase-4_integration/.gitignore
+phase-4_integration/requirements.txt
+phase-4_integration/src/full_pipeline.py
+phase-4_integration/src/history.py
+phase-4_integration/src/metadata_generator.py
+phase-4_integration/src/pipeline_config.py
+phase-4_integration/src/youtube_uploader.py
+PLAN.md
+requirements.txt
+test_email_gen.py
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="docs/08_PROGRESS-LOG.md">
+# 진행 상황 기록 (Progress Log)
+
+> 프로젝트 개발 및 문제 해결 과정을 시간 순으로 기록합니다.
+
+---
+
+## 2026-02-14: 뉴스 취합 로직 변경 및 API 오류 해결
+
+### 1. 뉴스 취합 로직 및 구조 변경
+- **요청 사항**: 사용자 요청에 따라 뉴스 취합 방식을 대대적으로 변경했습니다.
+- **주요 변경 내용**:
+    - **취합 시간**: `어제 오전 7시 ~ 오늘 오전 7시`로 변경
+    - **구조 변경**: 기존의 단일 뉴스 목록에서 아래 3단 구조로 변경
+        1.  `core_news`: 주요 뉴스 10개 요약 (한국 선수 포함)
+        2.  `player_movement`: 선수 이적/계약, 루머, 로스터 변경
+        3.  `prospects`: 최상위 유망주 콜업 소식
+- **수정된 파일**:
+    - `phase-1_research-automation/src/researcher.py`: Gemini 프롬프트 및 날짜 계산 로직 수정
+    - `phase-1_research-automation/templates/email.html`: 새로운 데이터 구조를 반영하여 이메일 템플릿 전면 재작성
+
+### 2. 뉴스 생성 테스트 및 API 오류 디버깅
+- **문제 발생**: 변경된 로직으로 뉴스 생성을 테스트하는 과정에서 Gemini API 호출과 관련된 연속적인 오류가 발생했습니다.
+- **오류 해결 과정 (요약)**:
+    1.  **초기 오류**: `AttributeError` 및 `ImportError` 발생
+        - **원인**: `google-genai`와 `google-generativeai` 라이브러리 간의 API 호출 방식 차이로 인한 혼란.
+        - **조치**: `requirements.txt`를 수정하여 `google-generativeai` 라이브러리를 사용하도록 통일하고, 관련 import 문 및 API 호출 코드를 모두 수정.
+    2.  **모델 조회 오류**: `404 model not found for API version v1beta` 오류 발생
+        - **원인**: 사용자 API 키가 `v1beta`라는 구버전 API 엔드포인트에 연결되어 있어, `gemini-1.5-pro`와 같은 최신 모델을 인식하지 못하는 것으로 추정.
+        - **조치**: `gemini-pro`와 같이 보다 범용적인 모델로 변경하여 테스트했으나 동일한 오류 발생.
+- **최종 결론 및 해결 방안 제시**:
+    - 코드 레벨의 문제가 아닌, 사용자 계정의 API 키 자체의 권한 또는 버전 문제로 최종 결론.
+    - 사용자에게 **Google AI Studio에서 새 API 키를 발급받아 `.env` 파일에 업데이트**하는 방법을 안내.
+
+---
+
+---
+
+## 2026-02-17: Phase 1 리서치 포맷 최종 개편 + Supabase 연동 + GitHub 배포
+
+### 1. 문제 진단
+- GitHub Actions(매일 KST 07:00)에 배포된 코드가 이전 포맷(Format A)이어서, 이메일이 `top_news`, `korean_players`, `recommended_shorts_topic` 기반으로 발송됨
+- 로컬에서 수정한 새 포맷(Format C: `main_news`, `transactions`, `prospects`)이 push되지 않은 상태였음
+- fantasyDraftApp 뉴스탭과 이메일 간 데이터 포맷 불일치
+
+### 2. 변경 내용 및 배포
+
+#### researcher.py — 수집 포맷 최종 확정
+- `main_news` (핵심 뉴스 10선), `transactions` (선수 이동/루머), `prospects` (유망주 소식)
+- Gemini 프롬프트에 엄격 날짜 검증 규칙 (날짜 날조 금지, 이중 타임스탬프 검증)
+- Python 레벨 날짜 필터링 (`_filter_by_date_window`)
+
+#### formatter.py — 이메일 본문 3섹션
+- 핵심 뉴스: 순위 + 헤드라인 + 요약 + 출처 + 원문 링크
+- 선수 이동 & 루머: 타입 배지 + 헤드라인 + 요약
+- 유망주 소식: 팀 + 선수명 + 요약
+
+#### uploader.py — Supabase 업로드 (신규)
+- `mlb_news` 테이블에 upsert (Unique Key: `season, date`)
+- 컬럼: `season`, `date`, `news`(JSONB), `transactions`(JSONB), `prospects`(JSONB), `asian_players`(JSONB)
+
+#### mlb-daily.yml — 워크플로우 업데이트
+- `SUPABASE_URL`, `SUPABASE_SERVICE_KEY` 환경변수 추가
+
+#### GitHub Secrets 설정
+- `gh secret set`으로 `SUPABASE_URL`, `SUPABASE_SERVICE_KEY` 추가 완료
+- 총 6개 secrets: GEMINI_API_KEY, GMAIL_ADDRESS, GMAIL_APP_PASSWORD, RECIPIENT_EMAIL, SUPABASE_URL, SUPABASE_SERVICE_KEY
+
+### 3. 현재 데이터 흐름
+
+```
+[매일 KST 07:00 - GitHub Actions]
+  Gemini API (Google Search Grounding)
+    ↓
+  researcher.py → JSON (main_news, transactions, prospects)
+    ↓
+  ├─ formatter.py → HTML 이메일 → Gmail SMTP → 사용자 수신
+  ├─ outputs/{date}.json 파일 저장 (Artifacts 30일 보관)
+  └─ uploader.py → Supabase mlb_news 테이블
+                      ↓
+              fantasyDraftApp MLBNewsTab (실시간 구독)
+```
+
+### 4. Phase 2/4 호환성 참고
+- Streamlit 대시보드 (`app.py`) 및 Full Pipeline (`full_pipeline.py`)는 아직 이전 포맷 (`top_news`) 참조
+- 추후 통합 시 `top_news` → `main_news` 마이그레이션 필요
+
+---
+
+*마지막 업데이트: 2026-02-17*
+</file>
+
+<file path="phase-1_research-automation/migrations/01_create_mlb_daily_news.sql">
+-- Create mlb_daily_news table
+create table if not exists mlb_daily_news (
+  id bigint generated by default as identity primary key,
+  date date not null,
+  main_news jsonb default '[]'::jsonb,
+  transactions jsonb default '[]'::jsonb,
+  prospects jsonb default '[]'::jsonb,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  constraint mlb_daily_news_date_key unique (date)
+);
+
+-- Enable Row Level Security (RLS)
+alter table mlb_daily_news enable row level security;
+
+-- Policy for Service Role (if applicable) or generally allow read/write
+create policy "Enable read access for all users" on "public"."mlb_daily_news"
+as PERMISSIVE for SELECT
+to public
+using (true);
+
+create policy "Enable insert for authenticated users only" on "public"."mlb_daily_news"
+as PERMISSIVE for INSERT
+to authenticated
+with check (true);
+</file>
+
+<file path="phase-1_research-automation/migrations/02_update_mlb_news_table.sql">
+-- Add new columns for transactions and prospects to existing mlb_news table
+ALTER TABLE mlb_news 
+ADD COLUMN IF NOT EXISTS transactions jsonb DEFAULT '[]'::jsonb,
+ADD COLUMN IF NOT EXISTS prospects jsonb DEFAULT '[]'::jsonb;
+
+-- Optional: Comment on columns
+COMMENT ON COLUMN mlb_news.transactions IS 'List of player transactions and rumors';
+COMMENT ON COLUMN mlb_news.prospects IS 'List of top prospect call-ups';
+</file>
+
+<file path="phase-1_research-automation/src/debug_db.py">
+import os
+import sys
+import io
+from pathlib import Path
+from dotenv import load_dotenv
+from supabase import create_client
+
+# Windows encoding fix
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
+sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8")
+
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+
+url = os.environ.get("SUPABASE_URL")
+key = os.environ.get("SUPABASE_SERVICE_KEY")
+
+if not url or not key:
+    print("Supabase credentials missing.")
+    sys.exit(1)
+
+client = create_client(url, key)
+
+try:
+    response = client.table("mlb_news").select("*").limit(1).execute()
+    if response.data:
+        print("Full Columns:", list(response.data[0].keys()))
+    else:
+        print("Table empty.")
+
+    # Try Insert
+    print("Attempting insert...")
+    dummy = {
+        "season": 2026,
+        "date": "2099-01-01", # Future date to avoid conflict
+        "news": [],
+        "transactions": [],
+        "prospects": [],
+        "asian_players": []
+    }
+    client.table("mlb_news").upsert(dummy, on_conflict="date").execute()
+    print("Upsert success.")
+    # Delete it
+    client.table("mlb_news").delete().eq("date", "2099-01-01").execute()
+    print("Cleanup success.")
+
+except Exception as e:
+    print(f"Debug Error: {e}")
+    # Print error code if available
+    if hasattr(e, 'code'):
+        print(f"Error Code: {e.code}")
+    if hasattr(e, 'details'):
+        print(f"Error Details: {e.details}")
+</file>
+
+<file path="phase-1_research-automation/test_gemini.py">
+import os
+import google.generativeai as genai
+from dotenv import load_dotenv
+
+load_dotenv()
+api_key = os.getenv("GEMINI_API_KEY")
+
+if not api_key:
+    print("API Key not found in .env")
+else:
+    print(f"Using API Key starting with: {api_key[:10]}...")
+
+genai.configure(api_key=api_key)
+
+print("Listing models...")
+try:
+    found = False
+    for m in genai.list_models():
+        if 'generateContent' in m.supported_generation_methods:
+            print(f"- {m.name}")
+            found = True
+    if not found:
+        print("No models found with generateContent support.")
+except Exception as e:
+    print(f"Error listing models: {e}")
+</file>
+
+<file path="phase-1_research-automation/test_grounding_v2.py">
+import os
+import google.generativeai as genai
+from google.generativeai.types import Tool
+from dotenv import load_dotenv
+
+load_dotenv()
+api_key = os.getenv("GEMINI_API_KEY")
+genai.configure(api_key=api_key)
+
+model_name = "models/gemini-2.0-flash"
+
+print(f"Testing Google Search Grounding (v2) with {model_name}...")
+
+# Attempt 3: list of dict with google_search
+try:
+    print("\n--- Attempt 3: tools=[{'google_search': {}}] ---")
+    model = genai.GenerativeModel(model_name, tools=[{'google_search': {}}])
+    response = model.generate_content("What is the latest MLB news from yesterday?")
+    print("Response received!")
+    print(response.text[:200])
+except Exception as e:
+    print(f"[FAIL] Attempt 3 failed: {e}")
+
+# Attempt 4: tools='google_search' (string)
+try:
+    print("\n--- Attempt 4: tools='google_search' ---")
+    model = genai.GenerativeModel(model_name, tools='google_search')
+    response = model.generate_content("Who won the 2024 World Series?")
+    print("Response received!")
+    print(response.text[:200])
+except Exception as e:
+    print(f"[FAIL] Attempt 4 failed: {e}")
+</file>
+
+<file path="phase-1_research-automation/test_grounding_v3.py">
+import os
+from google import genai
+from google.genai import types
+from dotenv import load_dotenv
+
+load_dotenv()
+api_key = os.getenv("GEMINI_API_KEY")
+
+client = genai.Client(api_key=api_key)
+
+model_name = "gemini-2.0-flash"
+
+print(f"Testing Google Search Grounding (v3 - google-genai) with {model_name}...")
+
+try:
+    response = client.models.generate_content(
+        model=model_name,
+        contents="What is the latest MLB news from yesterday?",
+        config=types.GenerateContentConfig(
+            tools=[types.Tool(
+                google_search=types.GoogleSearch() 
+            )]
+        )
+    )
+    print("Response received!")
+    print(response.text[:200])
+    
+    # Check grounding
+    if response.candidates[0].grounding_metadata and response.candidates[0].grounding_metadata.search_entry_point:
+        print("[SUCCESS] Grounding metadata found.")
+        print(response.candidates[0].grounding_metadata.search_entry_point)
+    else:
+        print("[WARN] No grounding metadata found.")
+
+except Exception as e:
+    print(f"[FAIL] v3 failed: {e}")
+</file>
+
+<file path="phase-1_research-automation/test_grounding.py">
+import os
+import google.generativeai as genai
+from google.generativeai.types import Tool
+from dotenv import load_dotenv
+
+load_dotenv()
+api_key = os.getenv("GEMINI_API_KEY")
+genai.configure(api_key=api_key)
+
+model_name = "models/gemini-2.0-flash"
+
+print(f"Testing Google Search Grounding with {model_name}...")
+
+# Attempt 1: tools='google_search_retrieval'
+try:
+    print("\n--- Attempt 1: tools='google_search_retrieval' ---")
+    model = genai.GenerativeModel(model_name, tools='google_search_retrieval')
+    response = model.generate_content("What is the latest MLB news from yesterday?")
+    print("Response received!")
+    print(response.text[:200])
+    if response.candidates[0].grounding_metadata.search_entry_point:
+        print("[SUCCESS] Grounding metadata found.")
+    else:
+        print("[WARN] No grounding metadata found.")
+except Exception as e:
+    print(f"[FAIL] Attempt 1 failed: {e}")
+
+# Attempt 2: tool config object
+try:
+    print("\n--- Attempt 2: Tool object ---")
+    tool = Tool(google_search_retrieval={})
+    model = genai.GenerativeModel(model_name, tools=[tool])
+    response = model.generate_content("Who won the 2024 World Series?")
+    print("Response received!")
+    print(response.text[:200])
+except Exception as e:
+    print(f"[FAIL] Attempt 2 failed: {e}")
+</file>
+
+<file path="test_email_gen.py">
+import json
+import os
+import sys
+from phase_1_research_automation.src.formatter import format_email
+
+# Add src to path
+sys.path.append(os.path.join(os.getcwd(), 'phase-1_research-automation', 'src'))
+from formatter import format_email
+    print(f"Subject: {subject}")
+    print("-" * 20)
+    print(body[:1000])  # Print first 1000 chars to check language
+
+if __name__ == "__main__":
+    test_email_gen()
+</file>
+
+<file path=".gitignore">
+# === 환경변수 & 시크릿 ===
+.env
+*.env
+token.json
+client_secret.json
+
+# === Python ===
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+*.egg
+.venv/
+venv/
+
+# === 생성 파일 (영상/오디오/이미지) ===
+*.mp4
+*.mp3
+*.wav
+*.avi
+*.mov
+
+# === Phase별 출력/임시 디렉토리 ===
+outputs/
+temp/
+history/
+scripts/
+
+# === IDE / OS ===
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+</file>
+
+<file path="CLAUDE.md">
+# MLB Daily AI Creator
+
+MLB 뉴스 자동 수집 → AI 대본 생성 → 숏폼 영상 제작 → YouTube 업로드를 원스톱 처리하는 콘텐츠 자동화 시스템.
+
+## 프로젝트 구조
+
+```
+MLB-Daily-AI-Creator/
+├── .github/workflows/mlb-daily.yml    # Phase 1 일일 자동화 (cron)
+├── phase-1_research-automation/       # Gemini 뉴스 수집 + 이메일
+│   └── src/ (main.py, researcher.py, formatter.py, notifier.py)
+├── phase-2_app-prototype/             # Streamlit 대시보드 + 대본 생성
+│   ├── app.py, script_generator.py, data_store.py
+├── phase-3_video-pipeline/            # TTS + 배경 + 자막 → MP4 생성
+│   └── src/ (video_pipeline.py, tts_engine.py, background.py, composer.py, graphics.py, subtitle.py)
+├── phase-4_integration/               # 통합 파이프라인 + YouTube 업로드
+│   └── src/ (full_pipeline.py, youtube_uploader.py, metadata_generator.py, pipeline_config.py, history.py)
+├── docs/                              # 프로젝트 기획 문서
+├── .env.example                       # 환경변수 템플릿
+├── requirements.txt                   # 통합 의존성
+└── PLAN.md                            # 전체 Phase 계획
+```
+
+## 기술 스택
+
+- **AI**: Google Gemini API (2.0 Flash / Flash Lite) — 리서치, 대본, 메타데이터
+- **TTS**: Edge TTS (한국어 InJoonNeural/SunHiNeural, 무료)
+- **영상**: MoviePy (합성) + Pillow (그래픽) + Pexels API (배경)
+- **UI**: Streamlit
+- **업로드**: YouTube Data API v3 + OAuth 2.0
+- **이메일**: smtplib + Gmail
+- **CI/CD**: GitHub Actions
+
+## 실행 방법
+
+### Phase 1 — 뉴스 수집 (단독 실행)
+```bash
+cd phase-1_research-automation
+pip install -r requirements.txt
+python src/main.py
+```
+
+### Phase 2 — Streamlit 대시보드 (전체 파이프라인 포함)
+```bash
+pip install -r requirements.txt    # 루트 requirements
+cd phase-2_app-prototype
+streamlit run app.py
+```
+대시보드에서 "원클릭 자동 생성"으로 전체 파이프라인 실행 가능.
+
+### Phase 3 — 영상 생성 (단독 실행)
+```bash
+cd phase-3_video-pipeline
+pip install -r requirements.txt
+python src/video_pipeline.py
+```
+
+### Phase 4 — 통합 파이프라인 (CLI)
+```bash
+cd phase-4_integration
+python src/full_pipeline.py
+```
+
+## 환경변수
+
+`.env.example`을 `.env`로 복사 후 값 설정. 각 Phase 폴더에도 개별 `.env` 필요.
+
+| 변수 | 용도 | 필수 |
+|------|------|------|
+| `GEMINI_API_KEY` | Gemini API 키 | O |
+| `PEXELS_API_KEY` | 배경 영상 다운로드 | X (없으면 단색 배경) |
+| `GMAIL_ADDRESS` | 뉴스 이메일 발신 | Phase 1만 |
+| `GMAIL_APP_PASSWORD` | Gmail 앱 비밀번호 | Phase 1만 |
+| `RECIPIENT_EMAIL` | 뉴스 이메일 수신 | Phase 1만 |
+
+YouTube 업로드는 OAuth 2.0 인증 필요 (`client_secret.json` → 최초 실행 시 `token.json` 자동 생성).
+
+## GitHub Actions
+
+`.github/workflows/mlb-daily.yml`로 Phase 1이 매일 KST 08:00 자동 실행.
+GitHub Secrets에 `GEMINI_API_KEY`, `GMAIL_ADDRESS`, `GMAIL_APP_PASSWORD`, `RECIPIENT_EMAIL` 설정 필요.
+
+## 주의사항
+
+- `.env`, `token.json`, `client_secret.json`은 절대 커밋하지 않을 것 (`.gitignore`로 보호)
+- `outputs/`, `temp/`, `history/`, `scripts/` 디렉토리는 런타임 생성 파일이므로 커밋 불필요
+- 모든 API는 무료 티어 범위 내에서 운영 (월 $0)
+</file>
+
+<file path="docs/00_PROJECT-OVERVIEW.md">
+# MLB Daily AI Creator - Project Overview
+
+## 프로젝트 비전
+매일 아침 앱을 켜서 **리서치 → 대본 → 영상 편집**을 원스톱으로 처리하는
+MLB 콘텐츠 자동 생성 대시보드
+
+## 핵심 워크플로우
+
+```
+[Step 1]              [Step 2]              [Step 3]
+Gemini Intelligence → Creative Scripting → Instant Production
+(리서치/뉴스 수집)    (대본 자동 생성)      (영상 자동 생성)
+```
+
+## 타겟 플랫폼
+- YouTube Shorts (9:16)
+- Instagram Reels (9:16)
+- Twitter/X (16:9)
+
+## 기술 스택 요약
+
+| 영역 | 도구 | 역할 |
+|------|------|------|
+| 인터페이스 | FlutterFlow 또는 Glide | 앱 UI |
+| AI 두뇌 | Gemini API | 리서치 + 대본 |
+| 영상 엔진 | HeyGen / InVideo AI | 영상 자동 생성 |
+| 자동화 | Make.com | 전체 파이프라인 연결 |
+| TTS | ElevenLabs / Google TTS | AI 성우 |
+
+## 구현 단계 (Phase)
+
+| Phase | 이름 | 목표 | 예상 기간 |
+|-------|------|------|-----------|
+| 1 | Research Automation | Gemini 리서치 자동화 + 이메일/슬랙 전송 | 1-2주 |
+| 2 | App Prototype | 앱 UI 프로토타입 + 대본 생성 | 2-3주 |
+| 3 | Video Pipeline | 영상 자동 생성 파이프라인 구축 | 2-3주 |
+| 4 | Full Integration | 전체 통합 + 배포 | 2-3주 |
+
+## 폴더 구조
+
+```
+MLB-Daily-AI-Creator/
+├── docs/                          # 프로젝트 문서
+│   ├── 00_PROJECT-OVERVIEW.md     # 이 파일
+│   ├── 01_PHASE-1-PLAN.md        # Phase 1 상세 계획
+│   ├── 02_PHASE-2-PLAN.md        # Phase 2 상세 계획
+│   ├── 03_PHASE-3-PLAN.md        # Phase 3 상세 계획
+│   ├── 04_PHASE-4-PLAN.md        # Phase 4 상세 계획
+│   ├── 05_API-SETUP-GUIDE.md     # API 키 발급 및 설정 가이드
+│   ├── 06_TECH-DECISION-LOG.md   # 기술 선택 근거 기록
+│   └── 07_COST-OPTIMIZATION-RESEARCH.md  # 비용 최적화 리서치
+├── phase-1_research-automation/   # Phase 1 작업 파일
+├── phase-2_app-prototype/         # Phase 2 작업 파일
+├── phase-3_video-pipeline/        # Phase 3 작업 파일
+├── phase-4_integration/           # Phase 4 통합 작업
+├── assets/
+│   ├── images/                    # 이미지 리소스
+│   └── templates/                 # 대본/영상 템플릿
+└── config/                        # 설정 파일
+```
+</file>
+
+<file path="docs/01_PHASE-1-PLAN.md">
+# Phase 1: Research Automation (리서치 자동화)
+
+> 목표: Gemini API로 MLB 뉴스를 자동 수집하고, 매일 아침 요약본을 이메일/슬랙으로 받는 시스템 구축
+
+## 왜 Phase 1부터 시작하는가?
+- 앱 전체를 한 번에 만드는 것보다, 핵심 기능(리서치)을 먼저 검증
+- Make.com 자동화에 익숙해지는 훈련
+- 매일 실제 결과물을 받아보며 프롬프트를 튜닝할 수 있음
+
+---
+
+## Step 1-1: 사전 준비 (계정 및 API 키 발급)
+
+### 필요 계정
+- [ ] Google AI Studio 계정 (Gemini API 키 발급)
+  - URL: https://aistudio.google.com/
+  - 무료 티어로 시작 가능 (분당 15회 요청)
+- [ ] Make.com 계정
+  - URL: https://www.make.com/
+  - 무료 플랜: 월 1,000 오퍼레이션
+- [ ] (선택) Slack Workspace 또는 이메일 계정
+
+### API 키 발급 절차
+1. Google AI Studio 접속 → "Get API Key" 클릭
+2. 프로젝트 생성 → API 키 복사
+3. 키를 안전한 곳에 저장 (절대 공개 저장소에 올리지 않기)
+
+---
+
+## Step 1-2: Gemini 프롬프트 설계
+
+### 리서치 프롬프트 (초안)
+
+```
+당신은 MLB 전문 스포츠 기자입니다.
+오늘 날짜: {current_date}
+
+아래 조건에 맞춰 어제 밤 MLB 경기 결과를 분석해주세요:
+
+1. **핵심 뉴스 TOP 3**: 가장 주목할 만한 경기/선수 성과를 선정
+2. **각 뉴스 요약**: 각각 3줄 이내로 요약
+3. **한국 선수 동향**: 김하성, 이정후 등 한국 선수 출전 여부와 성적
+4. **숏폼 콘텐츠 추천**: 위 뉴스 중 유튜브 쇼츠 영상으로 만들기 가장 좋은 주제 1개와 이유
+
+출력 형식:
+- JSON 형식으로 출력
+- 각 뉴스에 "headline", "summary", "players", "stats" 필드 포함
+```
+
+### 예상 JSON 응답 구조
+
+```json
+{
+  "date": "2025-04-15",
+  "top_news": [
+    {
+      "rank": 1,
+      "headline": "오타니, 시즌 10호 홈런 폭발",
+      "summary": "오타니 쇼헤이가 양키스전에서 시즌 10호 홈런...",
+      "players": ["Shohei Ohtani"],
+      "stats": {"HR": 10, "AVG": ".315", "OPS": "1.050"},
+      "shorts_potential": "high"
+    }
+  ],
+  "korean_players": [
+    {
+      "name": "김하성",
+      "team": "SD Padres",
+      "result": "3타수 2안타 1타점",
+      "highlight": "결승 적시타"
+    }
+  ],
+  "recommended_shorts_topic": {
+    "topic": "오타니 시즌 10호 홈런",
+    "reason": "시각적 임팩트가 크고, 글로벌 관심도가 높음"
+  }
+}
+```
+
+---
+
+## Step 1-3: Make.com 자동화 시나리오 구성
+
+### 시나리오 흐름도
+
+```
+[트리거: 매일 오전 8시]
+        │
+        ▼
+[HTTP Request: Gemini API 호출]
+  - 리서치 프롬프트 전송
+  - JSON 응답 수신
+        │
+        ▼
+[JSON Parser: 응답 파싱]
+  - top_news 배열 추출
+  - korean_players 추출
+        │
+        ▼
+[포맷터: 보기 좋은 메시지로 변환]
+  - 마크다운 형식 정리
+        │
+        ├──→ [이메일 전송] (Gmail 모듈)
+        │
+        └──→ [슬랙 전송] (Slack 모듈) ← 선택
+```
+
+### Make.com 설정 상세
+
+#### 모듈 1: Schedule (트리거)
+- 유형: 매일 반복
+- 시간: 오전 8:00 (KST)
+
+#### 모듈 2: HTTP - Make a request
+- URL: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`
+- Method: POST
+- Headers:
+  ```
+  Content-Type: application/json
+  ```
+- Query String:
+  ```
+  key: {YOUR_GEMINI_API_KEY}
+  ```
+- Body:
+  ```json
+  {
+    "contents": [{
+      "parts": [{
+        "text": "리서치 프롬프트 (Step 1-2에서 작성한 내용)"
+      }]
+    }],
+    "generationConfig": {
+      "temperature": 0.7,
+      "maxOutputTokens": 2048
+    }
+  }
+  ```
+
+#### 모듈 3: JSON Parse
+- Gemini 응답에서 `candidates[0].content.parts[0].text` 추출
+
+#### 모듈 4: Gmail - Send an email
+- 수신자: 본인 이메일
+- 제목: `[MLB Daily] {date} 오늘의 핵심 뉴스`
+- 본문: 파싱된 뉴스 내용을 HTML 포맷으로
+
+---
+
+## Step 1-4: 테스트 및 튜닝
+
+### 테스트 체크리스트
+- [ ] Gemini API 단독 호출 테스트 (Google AI Studio에서)
+- [ ] Make.com 시나리오 수동 실행 테스트
+- [ ] 이메일/슬랙 수신 확인
+- [ ] 프롬프트 튜닝 (결과물의 품질 개선)
+  - 뉴스 선정 기준이 적절한가?
+  - JSON 형식이 깨지지 않는가?
+  - 한국 선수 정보가 정확한가?
+
+### 주의사항
+- Gemini 무료 티어 제한: 분당 15회 요청, 일일 1,500회
+- Make.com 무료 플랜: 월 1,000 오퍼레이션 → 매일 1회 실행이면 충분
+- Gemini의 실시간 정보는 Google Search grounding 기능 활용 필요
+
+### 예상 소요 비용
+| 항목 | 비용 |
+|------|------|
+| Gemini API (무료 티어) | $0 |
+| Make.com (무료 플랜) | $0 |
+| Gmail | $0 |
+| **합계** | **$0** |
+
+---
+
+## Phase 1 완료 기준
+- [ ] 매일 아침 8시에 MLB 뉴스 요약이 자동으로 이메일에 도착
+- [ ] 뉴스 TOP 3가 일관된 JSON 형식으로 제공됨
+- [ ] 한국 선수 동향이 포함됨
+- [ ] 숏폼 콘텐츠 추천 주제가 포함됨
+</file>
+
+<file path="docs/02_PHASE-2-PLAN.md">
+# Phase 2: App Prototype + Creative Scripting (앱 UI + 대본 생성)
+
+> 목표: 뉴스 카드를 선택하면 숏폼 대본을 자동 생성하는 앱 프로토타입 구축
+
+## 전제 조건
+- Phase 1 완료 (Gemini 리서치 자동화가 안정적으로 동작)
+- 프롬프트 튜닝이 충분히 이루어진 상태
+
+---
+
+## Step 2-1: 앱 UI 도구 선택
+
+### 옵션 비교
+
+| 기준 | FlutterFlow | Glide |
+|------|-------------|-------|
+| 학습 곡선 | 중간 (드래그앤드롭) | 낮음 (스프레드시트 기반) |
+| 커스터마이징 | 높음 | 중간 |
+| API 연동 | 우수 (직접 API 호출) | 가능 (Glide API) |
+| 배포 | iOS + Android + Web | Web + PWA |
+| 가격 | 무료 플랜 있음 | 무료 플랜 있음 |
+| 추천 상황 | 앱스토어 출시 목표 시 | 빠른 프로토타입 시 |
+
+### 권장: 초기에는 Glide로 시작 → 검증 후 FlutterFlow로 마이그레이션
+
+---
+
+## Step 2-2: 앱 화면 설계
+
+### 화면 1: 메인 대시보드 (뉴스 카드)
+
+```
+┌─────────────────────────────┐
+│  MLB Daily AI Creator       │
+│  2025년 4월 15일             │
+├─────────────────────────────┤
+│                             │
+│  ┌─────────────────────┐   │
+│  │ #1 오타니 10호 홈런   │   │
+│  │ 양키스전 3타수 2안타  │   │
+│  │ [영상 만들기 →]      │   │
+│  └─────────────────────┘   │
+│                             │
+│  ┌─────────────────────┐   │
+│  │ #2 김하성 결승 적시타 │   │
+│  │ 파드리스 4-3 승리     │   │
+│  │ [영상 만들기 →]      │   │
+│  └─────────────────────┘   │
+│                             │
+│  ┌─────────────────────┐   │
+│  │ #3 다저스 7연승 질주  │   │
+│  │ NL 서부 1위 독주     │   │
+│  │ [영상 만들기 →]      │   │
+│  └─────────────────────┘   │
+│                             │
+│  ──── 한국 선수 동향 ────   │
+│  김하성: 3타수 2안타 1타점  │
+│  이정후: 4타수 1안타       │
+│                             │
+└─────────────────────────────┘
+```
+
+### 화면 2: 대본 생성 (뉴스 카드 클릭 후)
+
+```
+┌─────────────────────────────┐
+│  ← 대본 생성               │
+│  "오타니 시즌 10호 홈런"    │
+├─────────────────────────────┤
+│                             │
+│  말투 선택:                 │
+│  [유머러스] [분석적] [열정적]│
+│                             │
+│  영상 길이:                 │
+│  [30초] [45초] [60초]       │
+│                             │
+│  ┌─────────────────────┐   │
+│  │ 생성된 대본:          │   │
+│  │                      │   │
+│  │ "여러분, 오타니가     │   │
+│  │  또 해냈습니다!       │   │
+│  │  어젯밤 양키스전에서  │   │
+│  │  시즌 10호 홈런을     │   │
+│  │  날렸는데요..."       │   │
+│  │                      │   │
+│  │ (편집 가능)           │   │
+│  └─────────────────────┘   │
+│                             │
+│  [대본 재생성] [영상 만들기]│
+│                             │
+└─────────────────────────────┘
+```
+
+---
+
+## Step 2-3: 대본 생성 프롬프트 설계
+
+### 말투별 프롬프트 템플릿
+
+#### 유머러스 버전
+```
+당신은 유머감각이 넘치는 MLB 유튜브 크리에이터입니다.
+다음 뉴스를 기반으로 유튜브 쇼츠 대본을 작성해주세요.
+
+뉴스: {selected_news_json}
+
+조건:
+- 길이: {duration}초 분량 (1초당 약 3단어 기준)
+- 말투: 친근하고 유머러스하게, 드립과 비유를 활용
+- 구조: 훅(5초) → 본문(핵심 내용) → 마무리(구독 유도)
+- 핵심 스탯을 자연스럽게 포함
+- 한국어로 작성
+
+출력 형식:
+{
+  "hook": "첫 5초 대사",
+  "body": "본문 대사",
+  "closing": "마무리 대사",
+  "full_script": "전체 대본",
+  "estimated_duration": "예상 초",
+  "suggested_hashtags": ["#태그1", "#태그2"]
+}
+```
+
+#### 분석적 버전
+```
+당신은 데이터 중심의 MLB 분석 전문가입니다.
+(... 말투만 다르고 구조는 동일 ...)
+- 말투: 객관적이고 분석적, 수치와 비교를 강조
+```
+
+#### 열정적 버전
+```
+당신은 열정적인 MLB 스포츠 캐스터입니다.
+(... 말투만 다르고 구조는 동일 ...)
+- 말투: 에너지 넘치는 실황 중계 스타일
+```
+
+---
+
+## Step 2-4: Make.com 시나리오 확장
+
+### Phase 2 시나리오 흐름
+
+```
+[Phase 1 시나리오 결과 → Google Sheets 저장]
+        │
+        ▼
+[앱에서 뉴스 카드 선택 + 옵션 선택]
+        │
+        ▼
+[Webhook 트리거 (Make.com)]
+  - selected_news, tone, duration 수신
+        │
+        ▼
+[HTTP Request: Gemini API 호출]
+  - 대본 생성 프롬프트 전송
+        │
+        ▼
+[JSON Parse → 대본 추출]
+        │
+        ▼
+[Webhook Response: 앱으로 대본 반환]
+```
+
+### 데이터 저장소
+- Google Sheets를 간이 DB로 활용
+  - Sheet 1: daily_news (매일 수집된 뉴스)
+  - Sheet 2: scripts (생성된 대본 이력)
+  - Sheet 3: settings (사용자 설정)
+
+---
+
+## Step 2-5: 테스트 체크리스트
+
+- [ ] Glide/FlutterFlow 앱에서 뉴스 카드가 정상 표시되는가
+- [ ] 카드 클릭 시 Webhook이 정상 호출되는가
+- [ ] 말투/길이 옵션이 프롬프트에 정상 반영되는가
+- [ ] 대본이 앱 화면에 정상 표시되는가
+- [ ] 대본 수동 편집이 가능한가
+- [ ] 대본 재생성이 가능한가
+
+---
+
+## Phase 2 완료 기준
+- [ ] 앱에서 뉴스 TOP 3 카드를 확인할 수 있음
+- [ ] 원하는 뉴스를 선택하면 대본이 자동 생성됨
+- [ ] 말투(유머/분석/열정)와 길이(30/45/60초) 선택 가능
+- [ ] 생성된 대본을 편집하고 저장할 수 있음
+</file>
+
+<file path="docs/03_PHASE-3-PLAN.md">
+# Phase 3: Video Pipeline (영상 자동 생성)
+
+> 목표: 확정된 대본을 넣으면 자막+TTS+배경이 포함된 영상이 자동 생성되는 파이프라인 구축
+
+## 전제 조건
+- Phase 2 완료 (대본 생성이 안정적으로 동작)
+- 영상 생성 도구 API 접근권 확보
+
+> **[MEMO] 유료/무료 스택 선택은 Phase 3 착수 시점에 결정**
+> - 옵션 A (유료): HeyGen + ElevenLabs + Make.com (~$38/월)
+> - 옵션 B (무료): MoviePy/FFmpeg + Edge TTS + GitHub Actions ($0/월)
+> - Phase 1~2 진행 경험과 그 시점의 상황에 따라 판단
+> - 상세 비교: `docs/07_COST-OPTIMIZATION-RESEARCH.md`
+
+---
+
+## Step 3-1: 영상 생성 도구 선택
+
+### 옵션 비교
+
+| 기준 | HeyGen | InVideo AI | Pictory | Runway |
+|------|--------|------------|---------|--------|
+| 주요 기능 | AI 아바타 영상 | 텍스트→영상 | 텍스트→영상 | AI 영상 생성 |
+| API 지원 | O | O | O | O |
+| 숏폼 최적화 | 우수 | 우수 | 양호 | 보통 |
+| 자막 자동 삽입 | O | O | O | X |
+| 한국어 TTS | O | 제한적 | X | X |
+| 가격대 | $24/월~ | $25/월~ | $19/월~ | $12/월~ |
+| Make.com 연동 | 공식 지원 | API 가능 | API 가능 | API 가능 |
+
+### 권장 조합
+- **메인**: HeyGen (AI 아바타 + 한국어 TTS + 자막 일체형)
+- **대안**: InVideo AI (아바타 없이 b-roll 스타일)
+- **TTS 보강**: ElevenLabs (더 자연스러운 음성이 필요할 경우)
+
+---
+
+## Step 3-2: TTS (Text-to-Speech) 설정
+
+### ElevenLabs 설정 (선택적 보강)
+- 한국어 음성 모델 선택
+- 음성 스타일 프리셋 저장
+  - "캐스터형": 빠르고 에너지 넘침
+  - "분석가형": 차분하고 명료함
+  - "유머형": 가볍고 친근함
+
+### TTS API 호출 예시
+
+```
+POST https://api.elevenlabs.io/v1/text-to-speech/{voice_id}
+
+Body:
+{
+  "text": "{대본 전체 텍스트}",
+  "model_id": "eleven_multilingual_v2",
+  "voice_settings": {
+    "stability": 0.5,
+    "similarity_boost": 0.8
+  }
+}
+
+Response: audio/mpeg 파일
+```
+
+---
+
+## Step 3-3: 배경 이미지/영상 소싱 전략
+
+### 자동 이미지 소싱 파이프라인
+
+```
+[대본에서 키워드 추출 (Gemini)]
+        │
+        ▼
+[이미지 검색 API 호출]
+  - Unsplash API (무료, CC 라이선스)
+  - Pexels API (무료, CC 라이선스)
+  - Pixabay API (무료, CC 라이선스)
+        │
+        ▼
+[이미지 선별 및 다운로드]
+  - MLB 관련 키워드: "baseball", "stadium", "home run" 등
+  - 선수 이름 → 팀 로고/유니폼 색상 매칭
+```
+
+### 저작권 안전 소스
+
+| 소스 | 유형 | 라이선스 | API |
+|------|------|----------|-----|
+| Unsplash | 사진 | 무료 상업적 사용 | O |
+| Pexels | 사진+영상 | 무료 상업적 사용 | O |
+| Pixabay | 사진+영상 | 무료 상업적 사용 | O |
+| MLB 공식 보도자료 | 사진 | 보도 목적 허용 | 수동 |
+
+### 주의: 절대 사용 금지
+- MLB 공식 중계 영상 캡처
+- 선수 초상권이 있는 무단 사진
+- 구단 로고 무단 사용
+
+---
+
+## Step 3-4: 영상 조립 파이프라인
+
+### 자동 영상 생성 흐름
+
+```
+[확정된 대본]
+     │
+     ├──→ [TTS 생성] → 음성 파일 (.mp3)
+     │
+     ├──→ [배경 이미지/영상 수집] → 미디어 파일들
+     │
+     ├──→ [자막 생성] → 타임스탬프 포함 SRT
+     │
+     └──→ [스탯 그래픽 생성] → 선수 성적 오버레이
+              │
+              ▼
+     [HeyGen/InVideo API: 영상 조립]
+              │
+              ▼
+     [최종 영상 파일 (.mp4)]
+        ├──→ 9:16 버전 (쇼츠/릴스)
+        └──→ 16:9 버전 (트위터)
+```
+
+### HeyGen API 호출 구조
+
+```
+POST https://api.heygen.com/v2/video/generate
+
+Body:
+{
+  "video_inputs": [{
+    "character": {
+      "type": "avatar",
+      "avatar_id": "{선택한_아바타}",
+      "avatar_style": "normal"
+    },
+    "voice": {
+      "type": "text",
+      "input_text": "{대본}",
+      "voice_id": "{한국어_음성_ID}"
+    },
+    "background": {
+      "type": "image",
+      "url": "{배경_이미지_URL}"
+    }
+  }],
+  "dimension": {
+    "width": 1080,
+    "height": 1920
+  }
+}
+```
+
+---
+
+## Step 3-5: 실시간 스탯 오버레이 (차별화 기능)
+
+### 스탯 그래픽 자동 생성
+
+```
+[Gemini 응답의 stats 필드]
+        │
+        ▼
+[그래픽 템플릿에 데이터 삽입]
+  - 선수 이름
+  - AVG / HR / OPS 등 주요 스탯
+  - 시즌 순위
+        │
+        ▼
+[PNG 오버레이 이미지 생성]
+  - Canva API 또는 HTML→이미지 변환
+```
+
+### 스탯 카드 디자인 (예시)
+
+```
+┌──────────────────┐
+│  SHOHEI OHTANI   │
+│  ─────────────── │
+│  AVG    .315     │
+│  HR     10       │
+│  OPS    1.050    │
+│  WAR    3.2      │
+│  ─────────────── │
+│  Season Rank: #2 │
+└──────────────────┘
+```
+
+---
+
+## Step 3-6: Make.com 시나리오 (Phase 3)
+
+```
+[Webhook: 대본 확정 신호 수신]
+        │
+        ├──→ [ElevenLabs API: TTS 생성]
+        │
+        ├──→ [Unsplash API: 배경 이미지 검색]
+        │
+        ├──→ [Gemini API: 스탯 데이터 추출]
+        │
+        ▼ (모두 완료 후)
+[HeyGen API: 영상 생성 요청]
+        │
+        ▼
+[대기: 영상 렌더링 완료 폴링]
+        │
+        ▼
+[영상 URL → 앱으로 전달]
+        │
+        ├──→ [Google Drive에 백업]
+        └──→ [앱: 영상 미리보기 표시]
+```
+
+---
+
+## Step 3-7: 테스트 체크리스트
+
+- [ ] TTS가 자연스러운 한국어로 대본을 읽는가
+- [ ] 배경 이미지가 대본 내용과 관련 있는가
+- [ ] 자막 타이밍이 음성과 일치하는가
+- [ ] 9:16 비율이 정확한가
+- [ ] 스탯 오버레이가 정확한 수치를 표시하는가
+- [ ] 영상 렌더링 시간이 수용 가능한가 (목표: 5분 이내)
+- [ ] 16:9 동시 렌더링이 동작하는가
+
+---
+
+## 예상 월간 운영 비용
+
+### 옵션 A: 유료 스택 (편의성 우선)
+
+| 항목 | 플랜 | 월 비용 |
+|------|------|---------|
+| HeyGen | Creator Plan | ~$24 |
+| ElevenLabs | Starter Plan | ~$5 |
+| Make.com | Core Plan | ~$9 |
+| Gemini API | 무료 티어 | $0 |
+| 이미지 API | 무료 티어 | $0 |
+| **합계** | | **~$38/월** |
+
+### 옵션 B: 무료 스택 (비용 최적화) -- 권장
+
+| 항목 | 대안 도구 | 월 비용 |
+|------|-----------|---------|
+| ~~HeyGen~~ | MoviePy + FFmpeg (Python) | **$0** |
+| ~~ElevenLabs~~ | Edge TTS 또는 Google Cloud TTS | **$0** |
+| ~~Make.com~~ | GitHub Actions 또는 n8n 셀프호스팅 | **$0** |
+| Gemini API | 무료 티어 | $0 |
+| 이미지 API | Pexels/Unsplash 무료 | $0 |
+| **합계** | | **$0/월** |
+
+> 상세 비교는 `docs/07_COST-OPTIMIZATION-RESEARCH.md` 참조
+
+---
+
+## Phase 3 완료 기준
+- [ ] 대본을 넣으면 60초 이내 숏폼 영상이 생성됨
+- [ ] 영상에 TTS 음성 + 자막 + 배경이 포함됨
+- [ ] 9:16과 16:9 두 가지 비율로 출력 가능
+- [ ] 스탯 그래픽이 영상에 자동 삽입됨
+- [ ] 앱에서 영상 미리보기가 가능함
+</file>
+
+<file path="docs/04_PHASE-4-PLAN.md">
+# Phase 4: Full Integration + 배포 (전체 통합)
+
+> 목표: Phase 1~3을 하나의 앱으로 통합하고, 소셜 미디어 직접 업로드 기능 추가
+
+## 전제 조건
+- Phase 1~3 각각 독립적으로 안정 동작
+- 각 API의 유료 플랜 전환 완료 (무료 스택 선택 시 불필요)
+
+> **[MEMO] 유료/무료 스택 선택은 Phase 4 착수 시점에 결정**
+> - 옵션 A (유료): Glide/FlutterFlow + Make.com (~$39~69/월)
+> - 옵션 B (무료): Streamlit + GitHub Actions + YouTube API ($0~5/월)
+> - Phase 3까지의 결과물과 운영 경험을 보고 판단
+> - 상세 비교: `docs/07_COST-OPTIMIZATION-RESEARCH.md`
+
+---
+
+## Step 4-1: 전체 워크플로우 통합
+
+### 통합 흐름도 (End-to-End)
+
+```
+[매일 오전 8시 자동 트리거]
+        │
+        ▼
+[Gemini: MLB 뉴스 리서치]
+        │
+        ▼
+[앱: 뉴스 카드 3개 표시] ← 사용자 앱 오픈
+        │
+        ▼
+[사용자: 뉴스 선택 + 옵션 설정]
+  - 말투 / 길이 / 플랫폼
+        │
+        ▼
+[Gemini: 대본 생성]
+        │
+        ▼
+[앱: 대본 표시 + 편집]
+        │
+        ▼
+[사용자: 대본 확정]
+        │
+        ▼
+[영상 자동 생성]
+  - TTS + 배경 + 자막 + 스탯
+        │
+        ▼
+[앱: 영상 미리보기]
+        │
+        ▼
+[사용자: 승인]
+        │
+        ├──→ [YouTube Shorts 업로드]
+        ├──→ [Instagram Reels 업로드]
+        └──→ [Twitter/X 업로드]
+```
+
+---
+
+## Step 4-2: 소셜 미디어 업로드 연동
+
+### YouTube Shorts
+- **도구**: YouTube Data API v3
+- **Make.com 모듈**: YouTube - Upload a Video
+- **필요 정보**:
+  - OAuth 2.0 인증
+  - 제목, 설명, 태그 (Gemini가 자동 생성)
+  - 카테고리: Sports (17)
+  - 공개 설정: Public / Unlisted / Scheduled
+
+### Instagram Reels
+- **도구**: Instagram Graph API (비즈니스 계정 필요)
+- **Make.com 모듈**: Instagram - Create a Video Post
+- **필요 정보**:
+  - Facebook 페이지 연동
+  - 영상 URL (클라우드 스토리지에 업로드 후)
+  - 캡션 + 해시태그
+
+### Twitter/X
+- **도구**: Twitter API v2
+- **Make.com 모듈**: Twitter - Create a Tweet (with media)
+- **필요 정보**:
+  - API Key + Bearer Token
+  - 영상 파일 (최대 140초, 512MB)
+  - 트윗 텍스트
+
+### 업로드 메타데이터 자동 생성
+
+```
+Gemini 프롬프트:
+"다음 대본을 기반으로 각 플랫폼별 업로드 메타데이터를 생성해주세요.
+
+대본: {script}
+
+출력:
+{
+  "youtube": {
+    "title": "...",
+    "description": "...",
+    "tags": ["...", "..."]
+  },
+  "instagram": {
+    "caption": "...",
+    "hashtags": ["...", "..."]
+  },
+  "twitter": {
+    "tweet_text": "..."
+  }
+}"
+```
+
+---
+
+## Step 4-3: 앱 최종 화면 구성
+
+### 전체 화면 맵
+
+```
+[메인 대시보드] ──→ [대본 생성] ──→ [영상 생성] ──→ [업로드]
+      │                                                  │
+      ├── [히스토리]                                     │
+      │   (과거 생성 영상 목록)                          │
+      │                                                  │
+      ├── [분석 대시보드]                                │
+      │   (업로드된 영상 성과 추적)                      │
+      │                                                  │
+      └── [설정]                                         │
+          (API 키, 기본 말투, 스케줄 등)                 │
+                                                         │
+                                              [업로드 완료!]
+                                              조회수 실시간 추적
+```
+
+### 추가 화면: 히스토리
+
+```
+┌─────────────────────────────┐
+│  ← 히스토리                 │
+├─────────────────────────────┤
+│                             │
+│  4/15 - 오타니 10호 홈런    │
+│  YT: 12,340 views | IG: 8K │
+│  [다시보기] [재활용]        │
+│                             │
+│  4/14 - 김하성 끝내기       │
+│  YT: 8,920 views | IG: 5K  │
+│  [다시보기] [재활용]        │
+│                             │
+│  4/13 - 다저스 신기록       │
+│  YT: 25,100 views | IG: 15K│
+│  [다시보기] [재활용]        │
+│                             │
+└─────────────────────────────┘
+```
+
+---
+
+## Step 4-4: 에러 핸들링 및 모니터링
+
+### 예상 장애 시나리오 및 대응
+
+| 시나리오 | 대응 방안 |
+|----------|-----------|
+| Gemini API 일시 장애 | 캐시된 직전 결과 사용 + 수동 뉴스 입력 UI |
+| TTS 생성 실패 | 대체 TTS(Google TTS) 자동 전환 |
+| 영상 렌더링 타임아웃 | 재시도 로직 + 사용자 알림 |
+| 업로드 실패 | 영상 로컬 저장 + 수동 업로드 안내 |
+| API 무료 한도 초과 | 사전 경고 + 유료 전환 안내 |
+
+### Make.com 에러 핸들링
+- 각 모듈에 Error Handler 추가
+- 실패 시 Slack/이메일 알림
+- 재시도 정책: 3회까지 자동 재시도, 5분 간격
+
+---
+
+## Step 4-5: 성과 추적 (Analytics)
+
+### 추적 지표
+
+| 지표 | 소스 | 목적 |
+|------|------|------|
+| 조회수 | YouTube/IG API | 콘텐츠 인기도 |
+| 좋아요/댓글 | YouTube/IG API | 참여도 |
+| 시청 지속 시간 | YouTube Analytics | 콘텐츠 품질 |
+| 구독자 증감 | YouTube Analytics | 채널 성장 |
+| 뉴스 주제별 성과 | 내부 DB | 어떤 주제가 잘 되는지 |
+| 말투별 성과 | 내부 DB | 어떤 스타일이 잘 되는지 |
+
+### 주간 리포트 자동화
+- 매주 월요일 아침, 지난주 성과 요약을 이메일로 전송
+- Gemini가 "이번 주 가장 잘된 콘텐츠와 개선 포인트" 분석
+
+---
+
+## Step 4-6: 배포
+
+### 배포 옵션
+
+| 방식 | 장점 | 단점 |
+|------|------|------|
+| Glide PWA | 즉시 배포, URL 공유 | 앱스토어 없음 |
+| FlutterFlow Web | 커스텀 도메인 가능 | 설정 필요 |
+| FlutterFlow iOS/Android | 앱스토어 출시 | 심사 필요 |
+
+### 권장 배포 순서
+1. Glide PWA로 즉시 배포 (본인 사용)
+2. 안정화 후 FlutterFlow로 마이그레이션
+3. 필요시 앱스토어 출시
+
+---
+
+## 최종 월간 운영 비용 예상
+
+### 옵션 A: 유료 스택
+
+| 항목 | 플랜 | 월 비용 |
+|------|------|---------|
+| HeyGen | Creator | ~$24 |
+| ElevenLabs | Starter | ~$5 |
+| Make.com | Core | ~$9 |
+| Gemini API | 무료 → Pay-as-you-go | $0~5 |
+| Glide | Pro (필요시) | $0~25 |
+| 도메인 (선택) | | ~$1 |
+| **합계** | | **~$39~69/월** |
+
+### 옵션 B: 무료 스택 (비용 최적화) -- 권장
+
+| 항목 | 대안 도구 | 월 비용 |
+|------|-----------|---------|
+| ~~HeyGen~~ | MoviePy + FFmpeg (Python) | **$0** |
+| ~~ElevenLabs~~ | Edge TTS / Google Cloud TTS | **$0** |
+| ~~Make.com~~ | GitHub Actions / n8n 셀프호스팅 | **$0** |
+| Gemini API | 무료 티어 | $0 |
+| ~~Glide~~ | Streamlit Community Cloud | **$0** |
+| 업로드 | YouTube Data API 무료 | $0 |
+| **합계** | | **$0~5/월** |
+
+> 상세 비교는 `docs/07_COST-OPTIMIZATION-RESEARCH.md` 참조
+
+---
+
+## Phase 4 완료 기준
+- [ ] 앱에서 리서치 → 대본 → 영상 → 업로드 전 과정이 동작
+- [ ] YouTube, Instagram, Twitter 중 최소 1곳에 자동 업로드
+- [ ] 과거 영상 히스토리 조회 가능
+- [ ] 에러 발생 시 알림이 오고 수동 대응 가능
+- [ ] 성과 지표를 앱에서 확인 가능
+</file>
+
+<file path="docs/05_API-SETUP-GUIDE.md">
+# API 설정 가이드
+
+> 이 문서는 프로젝트에 필요한 모든 API 키 발급 방법을 정리합니다.
+> Phase 1부터 순서대로 필요한 것만 발급하면 됩니다.
+
+---
+
+## Phase 1에서 필요
+
+### 1. Gemini API Key
+
+**발급 절차:**
+1. https://aistudio.google.com/ 접속
+2. Google 계정으로 로그인
+3. 좌측 메뉴 "Get API Key" 클릭
+4. "Create API Key" → 프로젝트 선택 또는 새로 생성
+5. 생성된 API 키 복사
+
+**무료 티어 한도:**
+- Gemini 2.0 Flash: 분당 15회, 일일 1,500회
+- 이 프로젝트에 충분한 수준
+
+**테스트 방법:**
+```bash
+curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"contents":[{"parts":[{"text":"Hello, test!"}]}]}'
+```
+
+### 2. Make.com 계정
+
+**가입 절차:**
+1. https://www.make.com/ 접속
+2. "Get started free" 클릭
+3. 이메일로 가입 또는 Google 로그인
+
+**무료 플랜 한도:**
+- 월 1,000 오퍼레이션
+- 2개 활성 시나리오
+- 매일 1회 실행이면 충분
+
+---
+
+## Phase 2에서 필요
+
+### 3. Glide 계정 (앱 빌더)
+
+**가입 절차:**
+1. https://www.glideapps.com/ 접속
+2. Google 계정으로 로그인
+3. "New Project" → 템플릿 또는 빈 프로젝트
+
+**무료 플랜 한도:**
+- 앱 1개
+- 500행 데이터
+- 프로토타입에 충분
+
+---
+
+## Phase 3에서 필요
+
+### 4. HeyGen API Key
+
+**발급 절차:**
+1. https://www.heygen.com/ 가입
+2. 대시보드 → Settings → API
+3. API Key 생성
+
+**가격:**
+- Creator Plan: ~$24/월
+- 영상 크레딧 기반 과금
+
+### 5. ElevenLabs API Key (선택)
+
+**발급 절차:**
+1. https://elevenlabs.io/ 가입
+2. Profile → API Keys
+3. 키 생성
+
+**가격:**
+- Free: 10,000 characters/월
+- Starter: $5/월, 30,000 characters
+
+### 6. Unsplash API Key (배경 이미지)
+
+**발급 절차:**
+1. https://unsplash.com/developers 접속
+2. "Register as a Developer"
+3. "New Application" 생성
+4. Access Key 복사
+
+**무료 한도:**
+- 시간당 50회 요청
+- 이 프로젝트에 충분
+
+---
+
+## Phase 4에서 필요
+
+### 7. YouTube Data API
+
+**발급 절차:**
+1. https://console.cloud.google.com/ 접속
+2. 프로젝트 생성
+3. "YouTube Data API v3" 활성화
+4. OAuth 2.0 클라이언트 ID 생성
+5. 동의 화면 설정
+
+### 8. Instagram Graph API
+
+**발급 절차:**
+1. Facebook 비즈니스 계정 필요
+2. https://developers.facebook.com/ 에서 앱 생성
+3. Instagram Basic Display API 추가
+4. 비즈니스 인스타그램 계정 연결
+
+### 9. Twitter API v2
+
+**발급 절차:**
+1. https://developer.twitter.com/ 접속
+2. 개발자 계정 신청
+3. 프로젝트 + 앱 생성
+4. API Key, Secret, Bearer Token 발급
+
+---
+
+## API 키 관리 주의사항
+
+1. **절대 공개 저장소(GitHub 등)에 API 키를 올리지 마세요**
+2. Make.com의 Connection 기능을 사용하면 키가 안전하게 저장됩니다
+3. 로컬 테스트 시 `.env` 파일에 저장하고 `.gitignore`에 추가
+4. 키가 유출된 경우 즉시 재생성
+</file>
+
+<file path="docs/06_TECH-DECISION-LOG.md">
+# 기술 선택 근거 기록 (Tech Decision Log)
+
+> 프로젝트 진행 중 내린 기술적 결정과 그 근거를 기록합니다.
+> 나중에 "왜 이 도구를 선택했지?"라는 질문에 답하기 위한 문서입니다.
+
+---
+
+## Decision #1: AI 모델 - Gemini 선택
+
+**날짜:** 프로젝트 시작 시점
+**선택:** Google Gemini API
+**대안:** ChatGPT API, Claude API
+
+**선택 근거:**
+- Google Search와 네이티브 연동 (grounding) → 실시간 MLB 뉴스 수집에 최적
+- 무료 티어가 넉넉 (일 1,500회)
+- JSON 출력 안정성 양호
+- Make.com과의 HTTP 연동 용이
+
+**트레이드오프:**
+- ChatGPT가 대본 창작 품질은 더 나을 수 있음
+- 필요시 대본 생성 단계만 ChatGPT로 전환 가능 (하이브리드)
+
+---
+
+## Decision #2: 자동화 도구 - Make.com 선택
+
+**날짜:** 프로젝트 시작 시점
+**선택:** Make.com
+**대안:** Zapier, n8n, Pipedream
+
+**선택 근거:**
+- 시각적 시나리오 빌더가 직관적
+- HTTP 모듈이 유연 (어떤 API든 연동 가능)
+- JSON 파싱 모듈 내장
+- 무료 플랜으로 프로토타입 가능
+
+**트레이드오프:**
+- n8n이 셀프호스팅 시 무료이지만 설치/관리 필요
+- Zapier가 더 많은 네이티브 연동을 제공하지만 비쌈
+
+---
+
+## Decision #3: 앱 빌더 - Glide → FlutterFlow 전략
+
+**날짜:** 프로젝트 시작 시점
+**선택:** 초기 Glide, 이후 FlutterFlow
+**대안:** Bubble, Adalo, 직접 코딩
+
+**선택 근거:**
+- Glide: 가장 빠른 프로토타이핑 (스프레드시트 기반)
+- FlutterFlow: 앱스토어 출시 가능, 커스터마이징 자유도 높음
+- 2단계 전략으로 속도와 품질 모두 확보
+
+**트레이드오프:**
+- Glide에서 FlutterFlow로 마이그레이션 시 재작업 필요
+- 직접 코딩(Flutter/React Native)이 가장 자유롭지만 개발 기간 길어짐
+
+---
+
+## Decision #4: 영상 생성 - HeyGen 선택
+
+**날짜:** Phase 3 시작 시
+**선택:** HeyGen
+**대안:** InVideo AI, Pictory, Runway
+
+**선택 근거:**
+- AI 아바타로 차별화된 콘텐츠 가능
+- 한국어 TTS 지원
+- 자막 자동 삽입
+- API 지원으로 자동화 가능
+
+**트레이드오프:**
+- 월 $24 비용 발생
+- 아바타 스타일이 제한적
+- InVideo AI가 b-roll 스타일에는 더 적합할 수 있음
+
+---
+
+## 향후 결정 필요 사항
+
+| 결정 | 시점 | 옵션 |
+|------|------|------|
+| TTS 음성 스타일 최종 선택 | Phase 3 | ElevenLabs vs HeyGen 내장 TTS |
+| 데이터 저장소 업그레이드 | Phase 4 | Google Sheets vs Firebase vs Supabase |
+| 수익화 모델 | 출시 후 | 구독제 vs 광고 vs 프리미엄 기능 |
+| 다국어 지원 | 확장 시 | 영어/일본어 대본 생성 추가 |
+</file>
+
+<file path="docs/07_COST-OPTIMIZATION-RESEARCH.md">
+# 비용 최적화 리서치 결과
+
+> Phase 3~4에서 발생하는 월 $39~69 비용을 최소화하기 위한 대안 조사
+> 조사일: 2026-02-11
+
+---
+
+## 현재 계획 vs 최적화 후 비용 비교
+
+| 영역 | 현재 계획 | 월 비용 | 최적화 대안 | 월 비용 |
+|------|-----------|---------|-------------|---------|
+| 영상 생성 | HeyGen | $24 | FFmpeg + MoviePy (Python) | **$0** |
+| TTS 음성 | ElevenLabs | $5 | Edge TTS / Google Cloud TTS | **$0** |
+| 자동화 | Make.com Core | $9 | n8n 셀프호스팅 / GitHub Actions | **$0** |
+| 앱 UI | Glide Pro | $25 | Streamlit / Vercel (Next.js) | **$0** |
+| 소셜 업로드 | Make.com 경유 | (포함) | Python 스크립트 / GitHub Actions | **$0** |
+| **합계** | | **$39~69/월** | | **$0~5/월** |
+
+---
+
+# A. 영상 생성 대안 (HeyGen $24/월 → $0)
+
+## 추천 순위
+
+### 1순위: FFmpeg + MoviePy + Pillow (Python 파이프라인) -- $0
+
+> 코드로 직접 영상을 조립하는 방식. 가장 유연하고 완전 무료.
+
+```
+[대본 텍스트]
+     ├──→ [TTS] → 음성 파일 (.mp3)
+     ├──→ [Pexels API] → 배경 영상/이미지 (무료)
+     ├──→ [Pillow] → 스탯 그래픽 생성
+     └──→ [Whisper] → 자막 타임스탬프 (.srt)
+              │
+              ▼
+     [MoviePy: 전부 합성 → MP4 출력]
+```
+
+- **비용**: $0 (로컬 PC에서 실행)
+- **장점**: 완전한 커스터마이징, 무제한 영상 생성, 워터마크 없음
+- **단점**: Python 개발 필요, 초기 세팅에 시간 소요
+- **필요 라이브러리**:
+  - `moviepy` (v2.0) -- 영상 합성
+  - `Pillow` -- 텍스트/이미지 오버레이
+  - `faster-whisper` -- 자막 생성
+  - `pexels-api` -- 무료 스톡 영상
+  - `ffmpeg-python` -- 인코딩
+
+### 2순위: MoneyPrinter (오픈소스 턴키 솔루션) -- $0
+
+- **URL**: https://github.com/FujiwaraChoki/MoneyPrinter
+- **설명**: 주제 입력 → 대본 → TTS → 스톡영상 → 자막 → 완성 영상까지 자동화된 파이썬 프로젝트
+- **비용**: $0 (Gemini API 무료 티어 + Pexels 무료)
+- **장점**: 이미 만들어진 파이프라인, 포크해서 MLB 특화 커스텀 가능
+- **단점**: 커뮤니티 유지보수, 비공식 TTS API 사용
+
+### 3순위: Remotion (React 기반 영상 프레임워크) -- $0
+
+- **URL**: https://remotion.dev
+- **설명**: React 컴포넌트로 영상을 만드는 프레임워크
+- **비용**: 개인/3인 이하 팀 무료 (상업적 사용 포함)
+- **장점**: React 개발자에게 최적, 데이터 기반 영상에 강점
+- **단점**: React/TypeScript 지식 필요
+
+### 참고: 클라우드 API 옵션 (유료)
+
+| 서비스 | 가격 | 특징 |
+|--------|------|------|
+| Shotstack | $39/월 | JSON 기반 영상 API, 200크레딧 |
+| JSON2Video | $49.95/월 | JSON → 영상, 자막 자동 |
+| Creatomate | $54/월 | 템플릿 기반, REST API |
+
+→ 유료 옵션은 현재 HeyGen($24)보다 오히려 비쌈. **Python 파이프라인이 가장 합리적**.
+
+---
+
+# B. TTS 음성 대안 (ElevenLabs $5/월 → $0)
+
+## 추천 순위
+
+### 1순위: Edge TTS (Microsoft) -- $0, 무제한
+
+- **URL**: https://github.com/rany2/edge-tts
+- **비용**: 완전 무료, API 키 불필요, 글자수 제한 없음
+- **한국어 음성**: `ko-KR-SunHiNeural` (여성), `ko-KR-InJoonNeural` (남성)
+- **품질**: 8/10 -- 뉴럴 음성, 자연스러운 억양
+- **사용법**: `pip install edge-tts`, 코드 5줄로 구현
+- **Make.com 연동**: 셀프호스팅 래퍼를 통해 HTTP 호출 가능
+
+```python
+import edge_tts
+import asyncio
+
+async def generate_speech(text, output_file):
+    communicate = edge_tts.Communicate(text, "ko-KR-SunHiNeural")
+    await communicate.save(output_file)
+
+asyncio.run(generate_speech("오타니가 또 해냈습니다!", "output.mp3"))
+```
+
+### 2순위: Google Cloud TTS -- $0 (월 100만 자 무료)
+
+- **URL**: https://cloud.google.com/text-to-speech
+- **비용**: WaveNet/Neural2 음성 월 100만 자 무료 (초과 시 $16/100만 자)
+- **한국어 품질**: 9/10 -- Edge TTS보다 한 단계 위
+- **Make.com**: 네이티브 연동 모듈 있음 (가장 쉬운 통합)
+- **주의**: Google Cloud 계정 + 카드 등록 필요 (과금은 무료 한도 초과 시만)
+
+### 3순위: Kokoro-82M (로컬 오픈소스) -- $0, 오프라인
+
+- **URL**: https://huggingface.co/hexgrad/Kokoro-82M
+- **비용**: 완전 무료, 로컬 실행
+- **한국어 품질**: 7.5/10
+- **특징**: CPU에서도 실행 가능, 82M 파라미터로 가벼움
+- **사용법**: `pip install kokoro`
+
+### 4순위: Naver CLOVA Voice -- 한국어 최고 품질
+
+- **URL**: https://www.ncloud.com/v2/product/aiService/clovaVoice
+- **비용**: 기본 100만 자 포함, 이후 종량제
+- **한국어 품질**: 9.5/10 -- 한국어 전용 100개 음성, 최고 품질
+- **특징**: 한국어에 가장 특화된 서비스
+
+### 비교표
+
+| 서비스 | 비용 | 한국어 품질 | 오프라인 | GPU 필요 | Make.com |
+|--------|------|------------|---------|---------|----------|
+| **Edge TTS** | $0 무제한 | 8/10 | X | X | HTTP 래퍼 |
+| **Google Cloud TTS** | $0 (100만자/월) | 9/10 | X | X | 네이티브 |
+| **Kokoro-82M** | $0 로컬 | 7.5/10 | O | X (CPU OK) | 셀프호스팅 |
+| **Naver CLOVA** | ~$0 (기본포함) | 9.5/10 | X | X | HTTP |
+| ElevenLabs (현재) | $5/월 | 8.5/10 | X | X | 네이티브 |
+
+---
+
+# C. 자동화 도구 대안 (Make.com $9/월 → $0)
+
+## 추천 순위
+
+### 1순위: n8n 셀프호스팅 -- $0
+
+- **URL**: https://n8n.io
+- **설명**: Make.com과 동일한 시각적 워크플로우 빌더, 오픈소스
+- **비용**: 셀프호스팅 시 $0 (Docker로 로컬 실행)
+- **무료 호스팅 옵션**:
+  - Railway 무료 티어 (월 $5 크레딧 제공)
+  - Render 무료 티어 (슬립 모드 있음)
+  - 로컬 PC에서 Docker로 상시 실행
+- **장점**: Make.com과 거의 동일한 UI, 400+ 노드, 무제한 워크플로우
+- **단점**: 셀프호스팅 관리 필요
+
+### 2순위: GitHub Actions -- $0
+
+- **URL**: https://github.com/features/actions
+- **비용**: 퍼블릭 레포 무제한 무료, 프라이빗 월 2,000분 무료
+- **사용법**: cron 스케줄로 매일 오전 8시 실행, Python 스크립트 트리거
+- **장점**: 코드 기반 자동화, 버전 관리 자동, 무료 한도 넉넉
+- **단점**: 시각적 빌더 없음, YAML 작성 필요
+
+```yaml
+# .github/workflows/mlb-daily.yml
+name: MLB Daily Research
+on:
+  schedule:
+    - cron: '0 23 * * *'  # UTC 23:00 = KST 08:00
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt
+      - run: python scripts/daily_research.py
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+```
+
+### 3순위: Google Apps Script -- $0
+
+- **URL**: https://script.google.com
+- **비용**: 완전 무료
+- **장점**: Google Sheets/Gmail과 네이티브 연동, 트리거 설정 간단
+- **단점**: JavaScript만 사용, 실행 시간 6분 제한, 외부 API 호출 제한적
+
+### 4순위: Python + Cron (로컬/VPS) -- $0
+
+- 로컬 PC의 Windows 작업 스케줄러로 Python 스크립트 매일 실행
+- 또는 Oracle Cloud 무료 VPS(평생 무료)에서 cron 실행
+
+### 비교표
+
+| 서비스 | 비용 | 시각적 빌더 | 설정 난이도 | 무료 한도 |
+|--------|------|------------|------------|----------|
+| **n8n 셀프호스팅** | $0 | O | 중 | 무제한 |
+| **GitHub Actions** | $0 | X | 중 | 월 2,000분 |
+| **Google Apps Script** | $0 | X | 하 | 일 90분 실행 |
+| **Python + Cron** | $0 | X | 중 | 무제한 |
+| Make.com (현재) | $9/월 | O | 하 | 월 10,000 ops |
+
+---
+
+# D. 앱 UI/호스팅 대안 (Glide $25/월 → $0)
+
+## 추천 순위
+
+### 1순위: Streamlit Community Cloud -- $0
+
+- **URL**: https://streamlit.io
+- **설명**: Python으로 대시보드/웹앱을 빠르게 만드는 프레임워크
+- **비용**: Community Cloud 무료 호스팅
+- **장점**: Python만으로 UI 구현, 대시보드에 최적, 무료 배포
+- **단점**: 모바일 최적화 제한적, 커스텀 디자인 한계
+
+```python
+import streamlit as st
+
+st.title("MLB Daily AI Creator")
+st.subheader("2026년 2월 11일 - 오늘의 핵심 뉴스")
+
+col1, col2, col3 = st.columns(3)
+with col1:
+    st.markdown("### #1 오타니 10호 홈런")
+    if st.button("영상 만들기", key="news1"):
+        generate_script(news_1)
+```
+
+### 2순위: Vercel + Next.js -- $0
+
+- **URL**: https://vercel.com
+- **비용**: 취미 플랜 무료 (월 100GB 대역폭)
+- **장점**: 프로덕션급 웹앱, 모바일 반응형, 서버리스 함수 포함
+- **단점**: React/Next.js 개발 필요
+
+### 3순위: Gradio on Hugging Face Spaces -- $0
+
+- **URL**: https://huggingface.co/spaces
+- **설명**: Python으로 AI 데모 앱을 만드는 프레임워크
+- **비용**: Hugging Face Spaces 무료 호스팅
+- **장점**: AI/ML 앱에 특화, 파일 업/다운로드 기본 지원
+
+### 4순위: Telegram/Discord Bot -- $0
+
+- 앱 대신 봇 인터페이스로 시작
+- 매일 아침 뉴스 카드 전송 → 사용자가 선택 → 대본 생성 → 영상 전달
+- **장점**: 별도 앱 개발 불필요, 즉시 구현 가능
+- **단점**: UI 제약, 알림 기반 경험
+
+### 비교표
+
+| 서비스 | 비용 | 개발 언어 | 모바일 지원 | 배포 난이도 |
+|--------|------|----------|------------|------------|
+| **Streamlit** | $0 | Python | 제한적 | 매우 쉬움 |
+| **Vercel + Next.js** | $0 | React | 우수 | 중 |
+| **Gradio + HF Spaces** | $0 | Python | 보통 | 쉬움 |
+| **Telegram Bot** | $0 | Python | 우수 | 쉬움 |
+| Glide (현재) | $0~25/월 | 노코드 | 우수 | 매우 쉬움 |
+
+---
+
+# E. 소셜 미디어 업로드 (무료 방법)
+
+### YouTube 업로드 -- $0
+- **YouTube Data API v3**: 무료 할당량 일 10,000 유닛
+- 영상 업로드 = 1,600 유닛 → 하루 6개 영상 업로드 가능
+- Python `google-api-python-client` 라이브러리로 구현
+
+### Instagram -- 제한적
+- Instagram Graph API: 비즈니스 계정 필요, Reels 업로드 지원
+- 무료이지만 Facebook 앱 심사 필요
+
+### Twitter/X -- $0 (Free 티어)
+- Free 티어: 월 1,500 트윗 게시 가능
+- 미디어 업로드 포함
+
+---
+
+# F. 최종 추천: 3가지 비용 시나리오
+
+## 시나리오 A: "완전 무료" -- $0/월
+
+> 모든 것을 로컬 + 오픈소스로 해결
+
+| 영역 | 도구 | 비용 |
+|------|------|------|
+| 리서치 | Gemini API 무료 티어 | $0 |
+| 대본 생성 | Gemini API 무료 티어 | $0 |
+| TTS | Edge TTS | $0 |
+| 영상 생성 | MoviePy + FFmpeg | $0 |
+| 자막 | faster-whisper | $0 |
+| 배경 소재 | Pexels/Unsplash API | $0 |
+| 자동화 | GitHub Actions / n8n | $0 |
+| 앱 UI | Streamlit Community Cloud | $0 |
+| 업로드 | YouTube Data API | $0 |
+| **합계** | | **$0/월** |
+
+**적합한 경우**: Python 개발이 가능하거나 학습 의지가 있는 경우
+**트레이드오프**: 초기 개발 시간 투자 필요 (2~4주), AI 아바타 없음
+
+## 시나리오 B: "최소 비용" -- ~$5/월
+
+> 핵심만 유료, 나머지 무료
+
+| 영역 | 도구 | 비용 |
+|------|------|------|
+| 리서치 + 대본 | Gemini API 무료 티어 | $0 |
+| TTS | Google Cloud TTS 무료 티어 | $0 |
+| 영상 생성 | MoviePy + FFmpeg | $0 |
+| 자동화 | n8n on Railway | ~$5 |
+| 앱 UI | Streamlit | $0 |
+| **합계** | | **~$5/월** |
+
+**적합한 경우**: 시각적 자동화 빌더(n8n)를 클라우드에서 편하게 쓰고 싶은 경우
+
+## 시나리오 C: "균형형" -- ~$15/월
+
+> 편의성과 비용의 균형
+
+| 영역 | 도구 | 비용 |
+|------|------|------|
+| 리서치 + 대본 | Gemini API | $0 |
+| TTS | Naver CLOVA Voice | ~$0 (기본 포함) |
+| 영상 생성 | MoviePy + FFmpeg | $0 |
+| 자동화 | Make.com 무료 → Core | $0~9 |
+| 앱 UI | Glide 무료 플랜 | $0 |
+| TTS 보강 | ElevenLabs Starter | $5 |
+| **합계** | | **~$5~15/월** |
+
+**적합한 경우**: 노코드 도구를 선호하고, 한국어 TTS 품질이 중요한 경우
+
+---
+
+# G. 핵심 결론
+
+1. **가장 큰 절감**: HeyGen($24) → MoviePy/FFmpeg($0)로 **월 $24 절약**
+   - AI 아바타는 포기하지만, 자막 + 배경영상 + TTS 조합으로 충분히 매력적인 숏폼 제작 가능
+   - MoneyPrinter 같은 오픈소스 프로젝트를 포크하면 개발 시간도 단축
+
+2. **두 번째 절감**: ElevenLabs($5) → Edge TTS($0)로 **월 $5 절약**
+   - Edge TTS의 한국어 뉴럴 음성이 충분히 자연스러움
+   - 더 높은 품질이 필요하면 Google Cloud TTS 무료 티어(월 100만 자)
+
+3. **세 번째 절감**: Make.com($9) → GitHub Actions / n8n($0)
+   - 개발자라면 GitHub Actions가 가장 깔끔
+   - 시각적 빌더를 원하면 n8n 셀프호스팅
+
+4. **앱 UI**: Streamlit이 Python 개발자에게 가장 빠른 선택지
+   - 대시보드형 워크플로우에 최적화된 프레임워크
+</file>
+
+<file path="phase-1_research-automation/.env.example">
+# Gemini API (https://aistudio.google.com/ 에서 발급)
+GEMINI_API_KEY=your_gemini_api_key_here
+
+# Gmail 설정 (https://myaccount.google.com/apppasswords 에서 앱 비밀번호 발급)
+GMAIL_ADDRESS=your_email@gmail.com
+GMAIL_APP_PASSWORD=your_16_char_app_password
+
+# 수신자 이메일 (본인 이메일과 동일해도 됨)
+RECIPIENT_EMAIL=your_email@gmail.com
+</file>
+
+<file path="phase-1_research-automation/.gitignore">
+.env
+outputs/
+__pycache__/
+*.pyc
+</file>
+
+<file path="phase-1_research-automation/src/notifier.py">
+"""
+Gmail SMTP를 통한 HTML 이메일 전송
+- smtplib + Gmail 앱 비밀번호 사용
+"""
+
+import smtplib
+import ssl
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
+
+SMTP_SERVER = "smtp.gmail.com"
+SMTP_PORT = 465
+
+
+def send_email(
+    sender: str,
+    password: str,
+    recipient: str,
+    subject: str,
+    html_body: str,
+) -> None:
+    """Gmail SMTP로 HTML 이메일을 전송한다."""
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"] = sender
+    msg["To"] = recipient
+    msg.attach(MIMEText(html_body, "html", "utf-8"))
+
+    context = ssl.create_default_context()
+    with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT, context=context) as server:
+        server.login(sender, password)
+        server.sendmail(sender, recipient, msg.as_string())
+
+    print(f"[OK] 이메일 전송 완료 → {recipient}")
+</file>
+
+<file path="phase-1_research-automation/src/uploader.py">
+"""
+Supabase에 MLB Daily 뉴스 데이터 업로드
+- 테이블: mlb_daily_news
+- 컬럼: date, main_news, transactions, prospects
+- Unique Key: date
+"""
+
+import json
+from datetime import datetime
+
+from supabase import create_client
+
+
+def upload_to_supabase(news_data: dict, supabase_url: str, supabase_key: str) -> None:
+    """뉴스 JSON을 Supabase mlb_daily_news 테이블에 upsert한다."""
+    client = create_client(supabase_url, supabase_key)
+
+    today = datetime.now().strftime("%Y-%m-%d")
+    
+    # 데이터 준비
+    row = {
+        "season": datetime.now().year,
+        "date": today,
+        "news": json.loads(json.dumps(news_data.get("main_news", []), ensure_ascii=False)),
+        "transactions": json.loads(json.dumps(news_data.get("transactions", []), ensure_ascii=False)),
+        "prospects": json.loads(json.dumps(news_data.get("prospects", []), ensure_ascii=False)),
+        "asian_players": [],
+    }
+
+    try:
+        result = (
+            client.table("mlb_news")
+            .upsert(row, on_conflict="season,date")
+            .execute()
+        )
+        print(f"  → Supabase 업로드 완료 (table=mlb_news, date={today})")
+    except Exception as e:
+        print(f"  [ERROR] Supabase 업로드 중 오류: {e}")
+        raise e
+</file>
+
+<file path="phase-2_app-prototype/.env.example">
+GEMINI_API_KEY=your_gemini_api_key_here
+</file>
+
+<file path="phase-2_app-prototype/.gitignore">
+.env
+scripts/
+__pycache__/
+*.pyc
+</file>
+
+<file path="phase-2_app-prototype/.streamlit/config.toml">
+[theme]
+primaryColor = "#1a2a6c"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f4f4f7"
+textColor = "#222222"
+font = "sans serif"
+
+[server]
+headless = true
+</file>
+
+<file path="phase-2_app-prototype/data_store.py">
+"""
+뉴스/대본 데이터 저장 및 조회
+- Phase 1 outputs에서 뉴스 JSON 읽기
+- 생성된 대본 저장/조회
+"""
+
+import json
+import os
+from datetime import datetime, timedelta
+from pathlib import Path
+
+# Phase 1 outputs 경로 (상대)
+PHASE1_OUTPUTS = Path(__file__).resolve().parent.parent / "phase-1_research-automation" / "outputs"
+SCRIPTS_DIR = Path(__file__).resolve().parent / "scripts"
+SCRIPTS_DIR.mkdir(exist_ok=True)
+
+
+def get_available_dates(limit: int = 14) -> list[str]:
+    """뉴스 JSON이 있는 날짜 목록 반환 (최신순)."""
+    if not PHASE1_OUTPUTS.exists():
+        return []
+    dates = []
+    for f in sorted(PHASE1_OUTPUTS.glob("*.json"), reverse=True):
+        dates.append(f.stem)
+        if len(dates) >= limit:
+            break
+    return dates
+
+
+def get_news(date: str) -> dict | None:
+    """특정 날짜의 뉴스 JSON 반환."""
+    path = PHASE1_OUTPUTS / f"{date}.json"
+    if not path.exists():
+        return None
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def save_script(date: str, news_rank: int, script_data: dict) -> str:
+    """생성된 대본 저장. 파일 경로 반환."""
+    ts = datetime.now().strftime("%H%M%S")
+    filename = f"{date}_news{news_rank}_{ts}.json"
+    path = SCRIPTS_DIR / filename
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(script_data, f, ensure_ascii=False, indent=2)
+    return str(path)
+
+
+def get_scripts(date: str | None = None) -> list[dict]:
+    """저장된 대본 목록 반환. date 지정 시 해당 날짜만."""
+    scripts = []
+    for f in sorted(SCRIPTS_DIR.glob("*.json"), reverse=True):
+        if date and not f.stem.startswith(date):
+            continue
+        with open(f, "r", encoding="utf-8") as fh:
+            data = json.load(fh)
+            data["_filename"] = f.name
+            scripts.append(data)
+    return scripts
+</file>
+
+<file path="phase-2_app-prototype/requirements.txt">
+streamlit>=1.40.0
+google-genai>=1.0.0
+python-dotenv>=1.0.0
+</file>
+
+<file path="phase-2_app-prototype/script_generator.py">
+"""
+Gemini API로 MLB 숏폼 대본 생성
+- 3가지 말투: 유머러스, 분석적, 열정적
+- 3가지 길이: 30초, 45초, 60초
+"""
+
+import json
+import re
+
+from google import genai
+from google.genai import types
+
+TONE_PROMPTS = {
+    "유머러스": "당신은 유머감각이 넘치는 MLB 유튜브 크리에이터입니다. 친근하고 유머러스하게, 드립과 비유를 활용하세요.",
+    "분석적": "당신은 데이터 중심의 MLB 분석 전문가입니다. 객관적이고 분석적으로, 수치와 비교를 강조하세요.",
+    "열정적": "당신은 열정적인 MLB 스포츠 캐스터입니다. 에너지 넘치는 실황 중계 스타일로 작성하세요.",
+}
+
+DURATION_WORDS = {
+    30: 90,
+    45: 135,
+    60: 180,
+}
+
+SCRIPT_PROMPT = """\
+{tone_description}
+
+다음 MLB 뉴스를 기반으로 유튜브 쇼츠/릴스 대본을 작성해주세요.
+
+뉴스:
+- 제목: {headline}
+- 요약: {summary}
+- 선수: {players}
+- 스탯: {stats}
+
+조건:
+- 길이: {duration}초 분량 (약 {word_count}단어 기준)
+- 구조: 훅(첫 5초, 시청자를 사로잡는 한마디) -> 본문(핵심 내용) -> 마무리(구독/좋아요 유도)
+- 핵심 스탯을 자연스럽게 포함
+- 한국어로 작성
+
+아래 JSON 형식으로만 출력하세요:
+
+{{
+  "hook": "첫 5초 대사 (시청자를 사로잡는 한마디)",
+  "body": "본문 대사 (핵심 내용 전달)",
+  "closing": "마무리 대사 (구독/좋아요 유도)",
+  "full_script": "전체 대본 (hook + body + closing을 자연스럽게 이어붙인 것)",
+  "estimated_duration": {duration},
+  "suggested_hashtags": ["#태그1", "#태그2", "#태그3", "#태그4", "#태그5"]
+}}
+"""
+
+
+def generate_script(
+    api_key: str,
+    news: dict,
+    tone: str = "유머러스",
+    duration: int = 30,
+) -> dict:
+    """뉴스 + 옵션으로 숏폼 대본 생성."""
+    client = genai.Client(api_key=api_key)
+
+    prompt = SCRIPT_PROMPT.format(
+        tone_description=TONE_PROMPTS.get(tone, TONE_PROMPTS["유머러스"]),
+        headline=news.get("headline", ""),
+        summary=news.get("summary", ""),
+        players=", ".join(news.get("players", [])) or "없음",
+        stats=json.dumps(news.get("stats", {}), ensure_ascii=False) or "없음",
+        duration=duration,
+        word_count=DURATION_WORDS.get(duration, 90),
+    )
+
+    response = client.models.generate_content(
+        model="gemini-2.0-flash-lite",
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            temperature=0.9,
+            max_output_tokens=2048,
+        ),
+    )
+
+    raw_text = response.text.strip()
+    json_match = re.search(r"```json\s*(.*?)\s*```", raw_text, re.DOTALL)
+    json_str = json_match.group(1) if json_match else raw_text
+
+    data = json.loads(json_str)
+
+    # 메타데이터 추가
+    data["_meta"] = {
+        "news_headline": news.get("headline", ""),
+        "tone": tone,
+        "duration": duration,
+    }
+    return data
+</file>
+
+<file path="phase-3_video-pipeline/.env.example">
+GEMINI_API_KEY=your_gemini_api_key
+PEXELS_API_KEY=your_pexels_api_key
+</file>
+
+<file path="phase-3_video-pipeline/.gitignore">
+.env
+outputs/
+__pycache__/
+*.pyc
+*.mp4
+*.mp3
+temp/
+</file>
+
+<file path="phase-3_video-pipeline/requirements.txt">
+edge-tts>=7.0
+moviepy>=2.0
+Pillow>=10.0
+requests>=2.30
+python-dotenv>=1.0
+</file>
+
+<file path="phase-3_video-pipeline/src/background.py">
+"""
+Pexels API 배경 영상 다운로드 모듈
+- 무료 API, CC 라이선스
+- 야구/스포츠 관련 영상 검색
+- 세로 영상(9:16) 우선 검색
+"""
+
+import os
+import requests
+from pathlib import Path
+
+PEXELS_API_URL = "https://api.pexels.com/videos/search"
+
+SEARCH_QUERIES = [
+    "baseball stadium",
+    "baseball game",
+    "baseball player",
+    "sports stadium night",
+    "baseball field",
+]
+
+
+def search_videos(api_key: str, query: str, per_page: int = 5) -> list[dict]:
+    """Pexels에서 영상 검색."""
+    headers = {"Authorization": api_key}
+    params = {
+        "query": query,
+        "per_page": per_page,
+        "orientation": "portrait",
+        "size": "medium",
+    }
+    resp = requests.get(PEXELS_API_URL, headers=headers, params=params, timeout=15)
+    resp.raise_for_status()
+    return resp.json().get("videos", [])
+
+
+def _pick_best_file(video: dict) -> str | None:
+    """영상에서 적절한 해상도의 다운로드 URL 선택."""
+    files = video.get("video_files", [])
+    # HD 세로 영상 우선
+    for f in files:
+        w, h = f.get("width", 0), f.get("height", 0)
+        if h >= 1080 and w < h:
+            return f["link"]
+    # HD 가로 영상
+    for f in files:
+        w, h = f.get("width", 0), f.get("height", 0)
+        if h >= 720:
+            return f["link"]
+    # 아무거나
+    if files:
+        return files[0]["link"]
+    return None
+
+
+def download_background(api_key: str, output_dir: str | Path, query: str | None = None) -> str:
+    """배경 영상 검색 및 다운로드.
+
+    Args:
+        api_key: Pexels API key
+        output_dir: 저장 디렉토리
+        query: 검색 키워드 (None이면 기본 키워드 순회)
+
+    Returns:
+        다운로드된 영상 파일 경로
+    """
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    bg_path = output_dir / "background.mp4"
+
+    queries = [query] if query else SEARCH_QUERIES
+
+    for q in queries:
+        try:
+            videos = search_videos(api_key, q)
+            for video in videos:
+                url = _pick_best_file(video)
+                if url:
+                    resp = requests.get(url, timeout=60, stream=True)
+                    resp.raise_for_status()
+                    with open(bg_path, "wb") as f:
+                        for chunk in resp.iter_content(chunk_size=8192):
+                            f.write(chunk)
+                    return str(bg_path)
+        except Exception:
+            continue
+
+    raise RuntimeError("배경 영상을 다운로드할 수 없습니다. Pexels API 키를 확인하세요.")
+</file>
+
+<file path="phase-3_video-pipeline/src/composer.py">
+"""
+MoviePy 영상 합성 모듈
+- 배경 영상 + TTS 음성 + 자막 + 스탯 카드 합성
+- 최종 출력: 1080x1920 세로 영상 (9:16)
+"""
+
+from pathlib import Path
+
+from moviepy import (
+    AudioFileClip,
+    ColorClip,
+    CompositeVideoClip,
+    ImageClip,
+    TextClip,
+    VideoFileClip,
+    concatenate_videoclips,
+)
+
+from subtitle import parse_srt, group_subtitles
+
+OUTPUT_WIDTH = 1080
+OUTPUT_HEIGHT = 1920
+FPS = 30
+
+
+def _get_font_path() -> str:
+    """자막용 한국어 폰트 경로."""
+    candidates = [
+        "C:/Windows/Fonts/malgun.ttf",
+        "C:/Windows/Fonts/NanumGothicBold.ttf",
+        "C:/Windows/Fonts/gulim.ttc",
+    ]
+    for p in candidates:
+        if Path(p).exists():
+            return p
+    return "C:/Windows/Fonts/arial.ttf"
+
+
+def _prepare_background(bg_path: str, duration: float) -> VideoFileClip:
+    """배경 영상을 9:16 비율로 리사이즈/크롭하고 길이 맞춤."""
+    clip = VideoFileClip(bg_path)
+
+    # 영상 길이가 짧으면 반복
+    if clip.duration < duration:
+        repeats = int(duration / clip.duration) + 1
+        clip = concatenate_videoclips([clip] * repeats)
+    clip = clip.subclipped(0, duration)
+
+    # 리사이즈: 세로 기준 맞춤
+    w, h = clip.size
+    target_ratio = OUTPUT_WIDTH / OUTPUT_HEIGHT  # 0.5625
+
+    if w / h > target_ratio:
+        # 가로가 넓으면 → 세로 기준 리사이즈 후 가로 크롭
+        new_h = OUTPUT_HEIGHT
+        new_w = int(w * (OUTPUT_HEIGHT / h))
+        clip = clip.resized((new_w, new_h))
+        x_center = new_w // 2
+        clip = clip.cropped(
+            x1=x_center - OUTPUT_WIDTH // 2,
+            y1=0,
+            x2=x_center + OUTPUT_WIDTH // 2,
+            y2=OUTPUT_HEIGHT,
+        )
+    else:
+        # 세로가 길거나 같으면 → 가로 기준 리사이즈 후 세로 크롭
+        new_w = OUTPUT_WIDTH
+        new_h = int(h * (OUTPUT_WIDTH / w))
+        clip = clip.resized((new_w, new_h))
+        y_center = new_h // 2
+        clip = clip.cropped(
+            x1=0,
+            y1=y_center - OUTPUT_HEIGHT // 2,
+            x2=OUTPUT_WIDTH,
+            y2=y_center + OUTPUT_HEIGHT // 2,
+        )
+
+    return clip
+
+
+def _create_subtitle_clips(srt_path: str, font_path: str) -> list:
+    """SRT 자막 → TextClip 리스트."""
+    entries = parse_srt(srt_path)
+    grouped = group_subtitles(entries, max_chars=15)
+
+    clips = []
+    for entry in grouped:
+        duration = entry["end"] - entry["start"]
+        if duration <= 0:
+            continue
+
+        txt_clip = (
+            TextClip(
+                text=entry["text"],
+                font=font_path,
+                font_size=52,
+                color="white",
+                stroke_color="black",
+                stroke_width=3,
+                text_align="center",
+                size=(OUTPUT_WIDTH - 100, None),
+                method="caption",
+            )
+            .with_position(("center", OUTPUT_HEIGHT - 350))
+            .with_start(entry["start"])
+            .with_duration(duration)
+        )
+        clips.append(txt_clip)
+
+    return clips
+
+
+def _create_stat_overlay(stat_card_path: str, audio_duration: float) -> ImageClip | None:
+    """스탯 카드 오버레이 (영상 중반에 3초간 표시)."""
+    if not stat_card_path or not Path(stat_card_path).exists():
+        return None
+
+    show_at = max(audio_duration * 0.4, 3.0)  # 영상 40% 지점
+    card = (
+        ImageClip(stat_card_path)
+        .resized(width=OUTPUT_WIDTH - 100)
+        .with_position(("center", OUTPUT_HEIGHT // 2 - 200))
+        .with_start(show_at)
+        .with_duration(3.0)
+    )
+    return card
+
+
+def compose_video(
+    audio_path: str,
+    bg_path: str,
+    srt_path: str,
+    output_path: str | Path,
+    stat_card_path: str | None = None,
+) -> str:
+    """모든 요소를 합성하여 최종 영상 생성.
+
+    Args:
+        audio_path: TTS 음성 파일 경로
+        bg_path: 배경 영상 파일 경로
+        srt_path: SRT 자막 파일 경로
+        output_path: 최종 영상 출력 경로
+        stat_card_path: 스탯 카드 이미지 경로 (optional)
+
+    Returns:
+        최종 영상 파일 경로
+    """
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # 1. 오디오 로드
+    audio = AudioFileClip(audio_path)
+    total_duration = audio.duration  # 오디오 길이에 정확히 맞춤
+
+    # 2. 배경 영상 준비
+    bg_clip = _prepare_background(bg_path, total_duration)
+
+    # 반투명 오버레이 (텍스트 가독성)
+    dark_overlay = (
+        ColorClip(size=(OUTPUT_WIDTH, OUTPUT_HEIGHT), color=(0, 0, 0))
+        .with_opacity(0.3)
+        .with_duration(total_duration)
+    )
+
+    # 3. 자막 클립
+    font_path = _get_font_path()
+    subtitle_clips = _create_subtitle_clips(srt_path, font_path)
+
+    # 4. 합성
+    layers = [bg_clip, dark_overlay] + subtitle_clips
+
+    # 스탯 카드 (있으면)
+    if stat_card_path:
+        stat_clip = _create_stat_overlay(stat_card_path, audio.duration)
+        if stat_clip:
+            layers.append(stat_clip)
+
+    final = CompositeVideoClip(layers, size=(OUTPUT_WIDTH, OUTPUT_HEIGHT))
+    final = final.with_audio(audio)
+    final = final.with_duration(total_duration)
+
+    # 5. 인코딩
+    final.write_videofile(
+        str(output_path),
+        fps=FPS,
+        codec="libx264",
+        audio_codec="aac",
+        preset="medium",
+        threads=4,
+    )
+
+    # 리소스 정리
+    audio.close()
+    bg_clip.close()
+    final.close()
+
+    return str(output_path)
+</file>
+
+<file path="phase-3_video-pipeline/src/graphics.py">
+"""
+Pillow 스탯 카드 생성 모듈
+- 선수 스탯을 시각적 카드로 생성
+- 반투명 배경 + 텍스트 오버레이
+- 영상 중간에 잠시 표시되는 용도
+"""
+
+from pathlib import Path
+from PIL import Image, ImageDraw, ImageFont
+
+CARD_WIDTH = 800
+CARD_HEIGHT = 400
+BG_COLOR = (20, 30, 60, 200)  # 반투명 네이비
+ACCENT_COLOR = (255, 200, 50)  # 골드
+TEXT_COLOR = (255, 255, 255)
+FONT_SIZE_TITLE = 36
+FONT_SIZE_STAT = 28
+FONT_SIZE_LABEL = 20
+
+
+def _get_font(size: int) -> ImageFont.FreeTypeFont:
+    """시스템에서 사용 가능한 한국어 폰트 로드."""
+    font_candidates = [
+        "C:/Windows/Fonts/malgun.ttf",       # 맑은 고딕
+        "C:/Windows/Fonts/NanumGothic.ttf",
+        "C:/Windows/Fonts/gulim.ttc",
+        "C:/Windows/Fonts/arial.ttf",
+    ]
+    for font_path in font_candidates:
+        if Path(font_path).exists():
+            return ImageFont.truetype(font_path, size)
+    return ImageFont.load_default()
+
+
+def create_stat_card(
+    player_name: str,
+    stats: dict,
+    output_dir: str | Path,
+) -> str:
+    """선수 스탯 카드 PNG 생성.
+
+    Args:
+        player_name: 선수 이름
+        stats: {"타율": ".312", "홈런": "25", ...} 딕셔너리
+        output_dir: 출력 디렉토리
+
+    Returns:
+        생성된 PNG 파일 경로
+    """
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    card_path = output_dir / "stat_card.png"
+
+    img = Image.new("RGBA", (CARD_WIDTH, CARD_HEIGHT), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(img)
+
+    # 둥근 배경
+    draw.rounded_rectangle(
+        [(0, 0), (CARD_WIDTH - 1, CARD_HEIGHT - 1)],
+        radius=20,
+        fill=BG_COLOR,
+    )
+
+    # 상단 악센트 라인
+    draw.rectangle([(20, 15), (CARD_WIDTH - 20, 20)], fill=ACCENT_COLOR)
+
+    # 선수 이름
+    font_title = _get_font(FONT_SIZE_TITLE)
+    draw.text((40, 35), player_name, font=font_title, fill=ACCENT_COLOR)
+
+    # 스탯 항목들
+    font_label = _get_font(FONT_SIZE_LABEL)
+    font_stat = _get_font(FONT_SIZE_STAT)
+
+    if stats:
+        stat_items = list(stats.items())[:6]  # 최대 6개
+        cols = min(3, len(stat_items))
+        col_width = (CARD_WIDTH - 80) // cols
+        y_start = 110
+
+        for i, (label, value) in enumerate(stat_items):
+            col = i % cols
+            row = i // cols
+            x = 40 + col * col_width
+            y = y_start + row * 120
+
+            draw.text((x, y), str(label), font=font_label, fill=(180, 190, 210))
+            draw.text((x, y + 30), str(value), font=font_stat, fill=TEXT_COLOR)
+
+    img.save(card_path, "PNG")
+    return str(card_path)
+</file>
+
+<file path="phase-3_video-pipeline/src/subtitle.py">
+"""
+SRT 자막 파싱 → MoviePy 자막 클립 생성 모듈
+- Edge TTS가 출력하는 SRT 파일에서 타임스탬프 추출
+- MoviePy TextClip 리스트 생성
+"""
+
+import re
+from pathlib import Path
+
+
+def parse_srt(srt_path: str | Path) -> list[dict]:
+    """SRT 자막 파일 파싱.
+
+    Returns:
+        [{"start": float, "end": float, "text": str}, ...]
+    """
+    srt_path = Path(srt_path)
+    content = srt_path.read_text(encoding="utf-8")
+
+    entries = []
+    # SRT 패턴: 숫자\n00:00:00,000 --> 00:00:02,500\n텍스트
+    pattern = re.compile(
+        r"\d+\s*\n(\d{2}:\d{2}:\d{2}[,\.]\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2}[,\.]\d{3})\s*\n(.+?)(?=\n\n|\n\d+\s*\n|\Z)",
+        re.DOTALL,
+    )
+
+    for m in pattern.finditer(content):
+        start = _time_to_seconds(m.group(1))
+        end = _time_to_seconds(m.group(2))
+        text = m.group(3).strip()
+        if text:
+            entries.append({"start": start, "end": end, "text": text})
+
+    return entries
+
+
+def _time_to_seconds(time_str: str) -> float:
+    """HH:MM:SS,mmm 또는 HH:MM:SS.mmm → 초 변환."""
+    time_str = time_str.replace(",", ".")
+    parts = time_str.split(":")
+    h, m = int(parts[0]), int(parts[1])
+    s = float(parts[2])
+    return h * 3600 + m * 60 + s
+
+
+def group_subtitles(entries: list[dict], max_chars: int = 20) -> list[dict]:
+    """짧은 자막을 묶어서 자연스러운 단위로 그룹핑.
+
+    Edge TTS는 단어 단위로 쪼개므로, 적절한 길이로 합침.
+    """
+    if not entries:
+        return []
+
+    grouped = []
+    current = {
+        "start": entries[0]["start"],
+        "end": entries[0]["end"],
+        "text": entries[0]["text"],
+    }
+
+    for entry in entries[1:]:
+        combined = current["text"] + " " + entry["text"]
+        if len(combined) <= max_chars:
+            current["end"] = entry["end"]
+            current["text"] = combined
+        else:
+            grouped.append(current)
+            current = {
+                "start": entry["start"],
+                "end": entry["end"],
+                "text": entry["text"],
+            }
+
+    grouped.append(current)
+    return grouped
+</file>
+
+<file path="phase-3_video-pipeline/src/tts_engine.py">
+"""
+Edge TTS 음성 생성 모듈
+- Microsoft Edge TTS (무료, 무제한)
+- 한국어 뉴럴 음성 지원
+- 음성 MP3 + 자막 VTT 동시 출력
+"""
+
+import asyncio
+import edge_tts
+from pathlib import Path
+
+VOICES = {
+    "female": "ko-KR-SunHiNeural",
+    "male": "ko-KR-InJoonNeural",
+}
+
+
+async def _generate(text: str, output_dir: Path, voice: str) -> dict:
+    """Edge TTS로 음성 + 자막 생성 (async)."""
+    output_dir.mkdir(parents=True, exist_ok=True)
+    audio_path = output_dir / "tts_audio.mp3"
+    srt_path = output_dir / "tts_subtitle.srt"
+
+    communicate = edge_tts.Communicate(text, voice)
+    submaker = edge_tts.SubMaker()
+
+    with open(audio_path, "wb") as f:
+        async for chunk in communicate.stream():
+            if chunk["type"] == "audio":
+                f.write(chunk["data"])
+            elif chunk["type"] == "WordBoundary":
+                submaker.feed(chunk)
+
+    with open(srt_path, "w", encoding="utf-8") as f:
+        f.write(submaker.get_srt())
+
+    return {
+        "audio_path": str(audio_path),
+        "srt_path": str(srt_path),
+    }
+
+
+def generate_tts(
+    text: str,
+    output_dir: str | Path,
+    voice_type: str = "male",
+) -> dict:
+    """대본 텍스트 → MP3 음성 + VTT 자막 생성.
+
+    Args:
+        text: 대본 전체 텍스트
+        output_dir: 출력 디렉토리
+        voice_type: "male" 또는 "female"
+
+    Returns:
+        {"audio_path": str, "srt_path": str}
+    """
+    voice = VOICES.get(voice_type, VOICES["male"])
+    output_dir = Path(output_dir)
+    return asyncio.run(_generate(text, output_dir, voice))
+</file>
+
+<file path="phase-3_video-pipeline/src/video_pipeline.py">
+"""
+MLB Daily AI Creator - Phase 3
+영상 자동 생성 파이프라인 진입점
+
+Usage:
+    python main.py --script "대본 텍스트"
+    python main.py --script-file script.json
+"""
+
+import argparse
+import json
+import sys
+import io
+import os
+import tempfile
+from pathlib import Path
+from datetime import datetime
+
+# Windows 한글 출력 대응 (이미 래핑된 경우 스킵)
+if sys.platform == "win32":
+    if not isinstance(sys.stdout, io.TextIOWrapper) or sys.stdout.encoding != "utf-8":
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+    if not isinstance(sys.stderr, io.TextIOWrapper) or sys.stderr.encoding != "utf-8":
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+
+from tts_engine import generate_tts
+from background import download_background
+from subtitle import parse_srt, group_subtitles
+from graphics import create_stat_card
+from composer import compose_video
+
+# 기본 출력 디렉토리
+DEFAULT_OUTPUT_DIR = Path(__file__).resolve().parent.parent / "outputs"
+
+
+def run_pipeline(
+    script_text: str,
+    output_dir: str | Path | None = None,
+    pexels_api_key: str | None = None,
+    voice_type: str = "male",
+    player_name: str | None = None,
+    stats: dict | None = None,
+    bg_query: str | None = None,
+) -> str:
+    """영상 생성 파이프라인 실행.
+
+    Args:
+        script_text: 대본 전체 텍스트
+        output_dir: 출력 디렉토리 (None이면 기본 경로)
+        pexels_api_key: Pexels API 키
+        voice_type: "male" 또는 "female"
+        player_name: 스탯 카드에 표시할 선수 이름
+        stats: 스탯 딕셔너리
+        bg_query: 배경 영상 검색 키워드
+
+    Returns:
+        최종 영상 파일 경로
+    """
+    if output_dir is None:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        output_dir = DEFAULT_OUTPUT_DIR / timestamp
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    work_dir = output_dir / "temp"
+    work_dir.mkdir(exist_ok=True)
+
+    # Step 1: TTS 음성 생성
+    print("[1/4] TTS 음성 생성 중...")
+    tts_result = generate_tts(script_text, work_dir, voice_type)
+    print(f"  - 음성: {tts_result['audio_path']}")
+    print(f"  - 자막: {tts_result['srt_path']}")
+
+    # Step 2: 배경 영상 다운로드
+    pexels_key = pexels_api_key or os.environ.get("PEXELS_API_KEY", "")
+    if pexels_key:
+        print("[2/4] 배경 영상 다운로드 중...")
+        try:
+            bg_path = download_background(pexels_key, work_dir, bg_query)
+            print(f"  - 배경: {bg_path}")
+        except Exception as e:
+            print(f"  - 배경 다운로드 실패, 단색 배경 사용: {e}")
+            bg_path = _create_solid_background(work_dir)
+    else:
+        print("[2/4] Pexels API 키 없음, 단색 배경 사용")
+        bg_path = _create_solid_background(work_dir)
+
+    # Step 3: 스탯 카드 생성
+    stat_card_path = None
+    if player_name and stats:
+        print("[3/4] 스탯 카드 생성 중...")
+        stat_card_path = create_stat_card(player_name, stats, work_dir)
+        print(f"  - 카드: {stat_card_path}")
+    else:
+        print("[3/4] 스탯 카드 스킵 (선수 정보 없음)")
+
+    # Step 4: 영상 합성
+    print("[4/4] 영상 합성 중...")
+    final_path = output_dir / "output.mp4"
+    result = compose_video(
+        audio_path=tts_result["audio_path"],
+        bg_path=bg_path,
+        srt_path=tts_result["srt_path"],
+        output_path=final_path,
+        stat_card_path=stat_card_path,
+    )
+    print(f"  - 완성: {result}")
+    return result
+
+
+def _create_solid_background(work_dir: Path) -> str:
+    """Pexels 키가 없을 때 단색 배경 영상 생성."""
+    from moviepy import ColorClip
+    bg_path = work_dir / "background.mp4"
+    clip = ColorClip(size=(1080, 1920), color=(15, 25, 55), duration=120)
+    clip.write_videofile(str(bg_path), fps=30, codec="libx264", audio=False, logger=None)
+    clip.close()
+    return str(bg_path)
+
+
+def main():
+    parser = argparse.ArgumentParser(description="MLB 숏폼 영상 자동 생성")
+    parser.add_argument("--script", type=str, help="대본 텍스트 (직접 입력)")
+    parser.add_argument("--script-file", type=str, help="대본 JSON 파일 경로")
+    parser.add_argument("--voice", type=str, default="male", choices=["male", "female"])
+    parser.add_argument("--output-dir", type=str, default=None)
+    parser.add_argument("--pexels-key", type=str, default=None)
+    parser.add_argument("--bg-query", type=str, default=None)
+    args = parser.parse_args()
+
+    # 대본 텍스트 결정
+    if args.script:
+        script_text = args.script
+        player_name = None
+        stats = None
+    elif args.script_file:
+        with open(args.script_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        script_text = data.get("full_script", "")
+        meta = data.get("_meta", {})
+        player_name = meta.get("player_name")
+        stats = meta.get("stats")
+    else:
+        print("--script 또는 --script-file 중 하나를 지정하세요.")
+        sys.exit(1)
+
+    if not script_text.strip():
+        print("대본 텍스트가 비어있습니다.")
+        sys.exit(1)
+
+    result = run_pipeline(
+        script_text=script_text,
+        output_dir=args.output_dir,
+        pexels_api_key=args.pexels_key,
+        voice_type=args.voice,
+        player_name=player_name,
+        stats=stats,
+        bg_query=args.bg_query,
+    )
+    print(f"\n영상 생성 완료: {result}")
+
+
+if __name__ == "__main__":
+    main()
+</file>
+
+<file path="phase-4_integration/.env.example">
+GEMINI_API_KEY=your_gemini_api_key
+PEXELS_API_KEY=your_pexels_api_key
+</file>
+
+<file path="phase-4_integration/.gitignore">
+.env
+token.json
+client_secret.json
+history/
+__pycache__/
+*.pyc
+</file>
+
+<file path="phase-4_integration/requirements.txt">
+google-api-python-client>=2.0
+google-auth-oauthlib>=1.0
+google-auth-httplib2>=0.1
+google-genai>=1.0
+python-dotenv>=1.0
+streamlit>=1.30
+</file>
+
+<file path="phase-4_integration/src/full_pipeline.py">
+"""
+MLB Daily AI Creator - 전체 파이프라인 오케스트레이터
+리서치 → 대본 → 영상 → 메타데이터 → YouTube 업로드 → 히스토리 저장
+
+Usage:
+    python full_pipeline.py --auto --tone 유머러스 --duration 30 --voice male --privacy private
+    python full_pipeline.py --auto --skip-upload
+"""
+
+import argparse
+import io
+import json
+import os
+import sys
+from dataclasses import dataclass, field
+from datetime import datetime
+from pathlib import Path
+from typing import Callable
+
+# Windows 한글 출력 대응 (이미 래핑된 경우 스킵)
+if sys.platform == "win32":
+    if not isinstance(sys.stdout, io.TextIOWrapper) or sys.stdout.encoding != "utf-8":
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+    if not isinstance(sys.stderr, io.TextIOWrapper) or sys.stderr.encoding != "utf-8":
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+
+# 프로젝트 루트
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+
+# 각 Phase src를 import 경로에 추가
+sys.path.insert(0, str(PROJECT_ROOT / "phase-1_research-automation" / "src"))
+sys.path.insert(0, str(PROJECT_ROOT / "phase-2_app-prototype"))
+sys.path.insert(0, str(PROJECT_ROOT / "phase-3_video-pipeline" / "src"))
+sys.path.insert(0, str(PROJECT_ROOT / "phase-4_integration" / "src"))
+
+from pipeline_config import load_all_env, get_config, validate_config
+
+# 환경변수 로드
+load_all_env()
+
+
+# ── 데이터 클래스 ──
+
+@dataclass
+class PipelineOptions:
+    """파이프라인 실행 옵션."""
+    tone: str = "유머러스"
+    duration: int = 30
+    voice: str = "male"
+    news_rank: int = 1          # 뉴스 순위 (1-based)
+    privacy: str = "private"    # YouTube 공개 설정
+    skip_upload: bool = False
+    skip_email: bool = False
+
+
+@dataclass
+class PipelineResult:
+    """파이프라인 실행 결과."""
+    success: bool = False
+    news_data: dict = field(default_factory=dict)
+    selected_news: dict = field(default_factory=dict)
+    script: dict = field(default_factory=dict)
+    video_path: str = ""
+    metadata: dict = field(default_factory=dict)
+    upload_result: dict = field(default_factory=dict)
+    history_path: str = ""
+    errors: list = field(default_factory=list)
+    stages_completed: list = field(default_factory=list)
+
+
+# 콜백 타입: callback(stage_name, status, message)
+StageCallback = Callable[[str, str, str], None]
+
+
+def _noop_callback(stage: str, status: str, message: str) -> None:
+    """기본 콜백 (아무것도 하지 않음)."""
+    pass
+
+
+def _print_callback(stage: str, status: str, message: str) -> None:
+    """CLI용 콜백 (stdout 출력)."""
+    icon = {"start": "⏳", "done": "✅", "error": "❌", "skip": "⏭️"}.get(status, "ℹ️")
+    print(f"  {icon} [{stage}] {message}")
+
+
+# ── 개별 스테이지 ──
+
+def stage_research(config: dict, callback: StageCallback) -> dict:
+    """Phase 1: MLB 뉴스 리서치."""
+    callback("research", "start", "MLB 뉴스 수집 중...")
+
+    from researcher import research_mlb_news
+    news_data = research_mlb_news(config["GEMINI_API_KEY"])
+
+    # 리서치 결과 파일 저장
+    out_dir = PROJECT_ROOT / "phase-1_research-automation" / "outputs"
+    out_dir.mkdir(exist_ok=True)
+    today = datetime.now().strftime("%Y-%m-%d")
+    out_file = out_dir / f"{today}.json"
+    with open(out_file, "w", encoding="utf-8") as f:
+        json.dump(news_data, f, ensure_ascii=False, indent=2)
+
+    count = len(news_data.get("top_news", []))
+    callback("research", "done", f"뉴스 {count}건 수집 완료")
+    return news_data
+
+
+def stage_script(
+    config: dict, news: dict, options: PipelineOptions, callback: StageCallback
+) -> dict:
+    """Phase 2: 숏폼 대본 생성."""
+    callback("script", "start", f"대본 생성 중... (말투: {options.tone}, {options.duration}초)")
+
+    from script_generator import generate_script
+    script = generate_script(
+        api_key=config["GEMINI_API_KEY"],
+        news=news,
+        tone=options.tone,
+        duration=options.duration,
+    )
+
+    callback("script", "done", "대본 생성 완료")
+    return script
+
+
+def stage_video(
+    config: dict, script: dict, news: dict, options: PipelineOptions, callback: StageCallback
+) -> str:
+    """Phase 3: 영상 생성."""
+    callback("video", "start", f"영상 생성 중... (음성: {options.voice})")
+
+    from video_pipeline import run_pipeline
+    players = news.get("players", [])
+    player_name = players[0] if players else None
+    stats = news.get("stats", None)
+
+    video_path = run_pipeline(
+        script_text=script.get("full_script", ""),
+        output_dir=None,
+        pexels_api_key=config.get("PEXELS_API_KEY", ""),
+        voice_type=options.voice,
+        player_name=player_name,
+        stats=stats if isinstance(stats, dict) else None,
+    )
+
+    callback("video", "done", f"영상 생성 완료: {video_path}")
+    return video_path
+
+
+def stage_metadata(
+    config: dict, script: dict, news: dict, callback: StageCallback
+) -> dict:
+    """Phase 4: 메타데이터 생성."""
+    callback("metadata", "start", "메타데이터 생성 중...")
+
+    from metadata_generator import generate_metadata
+    metadata = generate_metadata(
+        api_key=config["GEMINI_API_KEY"],
+        script_text=script.get("full_script", ""),
+        headline=news.get("headline", ""),
+    )
+
+    callback("metadata", "done", "메타데이터 생성 완료")
+    return metadata
+
+
+def stage_upload(
+    video_path: str, metadata: dict, options: PipelineOptions, callback: StageCallback
+) -> dict:
+    """Phase 4: YouTube 업로드."""
+    callback("upload", "start", f"YouTube 업로드 중... (공개: {options.privacy})")
+
+    from youtube_uploader import upload_to_youtube
+    yt_meta = metadata.get("youtube", {})
+    today = datetime.now().strftime("%Y-%m-%d")
+
+    result = upload_to_youtube(
+        video_path=video_path,
+        title=yt_meta.get("title", f"MLB 숏폼 - {today}"),
+        description=yt_meta.get("description", ""),
+        tags=yt_meta.get("tags", []),
+        privacy=options.privacy,
+    )
+
+    callback("upload", "done", f"업로드 완료: {result.get('url', '')}")
+    return result
+
+
+def stage_history(
+    news: dict, video_path: str, upload_result: dict | None,
+    metadata: dict | None, options: PipelineOptions, callback: StageCallback
+) -> str:
+    """히스토리 저장."""
+    callback("history", "start", "히스토리 저장 중...")
+
+    from history import save_history
+    today = datetime.now().strftime("%Y-%m-%d")
+
+    path = save_history(
+        date=today,
+        headline=news.get("headline", ""),
+        video_path=video_path,
+        upload_result=upload_result,
+        metadata=metadata,
+        tone=options.tone,
+        duration=options.duration,
+    )
+
+    callback("history", "done", "히스토리 저장 완료")
+    return path
+
+
+# ── 메인 파이프라인 ──
+
+def run_full_pipeline(
+    options: PipelineOptions | None = None,
+    callback: StageCallback | None = None,
+) -> PipelineResult:
+    """전체 파이프라인 실행.
+
+    6개 스테이지를 순차 실행:
+        research → script → video → metadata → upload → history
+
+    Args:
+        options: 파이프라인 옵션 (None이면 기본값)
+        callback: 진행 상황 콜백 (stage, status, message)
+
+    Returns:
+        PipelineResult 객체
+    """
+    if options is None:
+        options = PipelineOptions()
+    if callback is None:
+        callback = _noop_callback
+
+    config = get_config()
+    result = PipelineResult()
+
+    # 필수 키 검증
+    required = ["GEMINI_API_KEY"]
+    if not options.skip_upload:
+        pass  # YouTube는 OAuth 기반, API 키 불필요
+    missing = validate_config(config, required)
+    if missing:
+        result.errors.append(f"필수 환경변수 누락: {', '.join(missing)}")
+        callback("config", "error", f"환경변수 누락: {', '.join(missing)}")
+        return result
+
+    # ── Stage 1: Research ──
+    try:
+        news_data = stage_research(config, callback)
+        result.news_data = news_data
+        result.stages_completed.append("research")
+    except Exception as e:
+        result.errors.append(f"리서치 실패: {e}")
+        callback("research", "error", f"리서치 실패: {e}")
+        return result
+
+    # 뉴스 선택
+    top_news = news_data.get("top_news", [])
+    if not top_news:
+        result.errors.append("수집된 뉴스가 없습니다")
+        callback("research", "error", "수집된 뉴스가 없습니다")
+        return result
+
+    rank_idx = min(options.news_rank - 1, len(top_news) - 1)
+    rank_idx = max(0, rank_idx)
+    selected_news = top_news[rank_idx]
+    result.selected_news = selected_news
+
+    # ── Stage 2: Script ──
+    try:
+        script = stage_script(config, selected_news, options, callback)
+        result.script = script
+        result.stages_completed.append("script")
+    except Exception as e:
+        result.errors.append(f"대본 생성 실패: {e}")
+        callback("script", "error", f"대본 생성 실패: {e}")
+        return result
+
+    # ── Stage 3: Video ──
+    try:
+        video_path = stage_video(config, script, selected_news, options, callback)
+        result.video_path = video_path
+        result.stages_completed.append("video")
+    except Exception as e:
+        result.errors.append(f"영상 생성 실패: {e}")
+        callback("video", "error", f"영상 생성 실패: {e}")
+        return result
+
+    # 핵심 3단계 완료 → success=True
+    result.success = True
+
+    # ── Stage 4: Metadata ──
+    try:
+        metadata = stage_metadata(config, script, selected_news, callback)
+        result.metadata = metadata
+        result.stages_completed.append("metadata")
+    except Exception as e:
+        result.errors.append(f"메타데이터 생성 실패 (계속 진행): {e}")
+        callback("metadata", "error", f"메타데이터 생성 실패: {e}")
+        metadata = {}
+
+    # ── Stage 5: Upload ──
+    if options.skip_upload:
+        callback("upload", "skip", "업로드 스킵 (--skip-upload)")
+    else:
+        try:
+            upload_result = stage_upload(video_path, metadata, options, callback)
+            result.upload_result = upload_result
+            result.stages_completed.append("upload")
+        except Exception as e:
+            result.errors.append(f"YouTube 업로드 실패: {e}")
+            callback("upload", "error", f"YouTube 업로드 실패: {e}")
+
+    # ── Stage 6: History ──
+    try:
+        history_path = stage_history(
+            selected_news, video_path,
+            result.upload_result or None,
+            result.metadata or None,
+            options, callback,
+        )
+        result.history_path = history_path
+        result.stages_completed.append("history")
+    except Exception as e:
+        result.errors.append(f"히스토리 저장 실패 (비치명적): {e}")
+        callback("history", "error", f"히스토리 저장 실패: {e}")
+
+    return result
+
+
+# ── CLI ──
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="MLB Daily AI Creator - 전체 파이프라인 (원클릭 실행)"
+    )
+    parser.add_argument("--auto", action="store_true", help="자동 실행 모드")
+    parser.add_argument("--tone", type=str, default="유머러스",
+                        choices=["유머러스", "분석적", "열정적"], help="대본 말투")
+    parser.add_argument("--duration", type=int, default=30,
+                        choices=[30, 45, 60], help="영상 길이 (초)")
+    parser.add_argument("--voice", type=str, default="male",
+                        choices=["male", "female"], help="TTS 음성")
+    parser.add_argument("--news-rank", type=int, default=1, help="뉴스 순위 (1=1위)")
+    parser.add_argument("--privacy", type=str, default="private",
+                        choices=["private", "unlisted", "public"], help="YouTube 공개 설정")
+    parser.add_argument("--skip-upload", action="store_true", help="YouTube 업로드 스킵")
+    parser.add_argument("--skip-email", action="store_true", help="이메일 발송 스킵")
+    args = parser.parse_args()
+
+    if not args.auto:
+        print("전체 파이프라인을 실행하려면 --auto 플래그를 추가하세요.")
+        print("예: python full_pipeline.py --auto --skip-upload")
+        parser.print_help()
+        sys.exit(1)
+
+    print("=" * 60)
+    print("  MLB Daily AI Creator - 전체 파이프라인")
+    print("=" * 60)
+    print(f"  옵션: 말투={args.tone}, 길이={args.duration}초, 음성={args.voice}")
+    print(f"  업로드: {'스킵' if args.skip_upload else args.privacy}")
+    print("=" * 60)
+
+    options = PipelineOptions(
+        tone=args.tone,
+        duration=args.duration,
+        voice=args.voice,
+        news_rank=args.news_rank,
+        privacy=args.privacy,
+        skip_upload=args.skip_upload,
+        skip_email=args.skip_email,
+    )
+
+    result = run_full_pipeline(options, callback=_print_callback)
+
+    print("\n" + "=" * 60)
+    if result.success:
+        print("  ✅ 파이프라인 완료!")
+        print(f"  영상: {result.video_path}")
+        if result.upload_result:
+            print(f"  YouTube: {result.upload_result.get('url', '')}")
+        print(f"  완료된 스테이지: {', '.join(result.stages_completed)}")
+    else:
+        print("  ❌ 파이프라인 실패")
+
+    if result.errors:
+        print("\n  에러:")
+        for err in result.errors:
+            print(f"    - {err}")
+    print("=" * 60)
+
+    sys.exit(0 if result.success else 1)
+
+
+if __name__ == "__main__":
+    main()
+</file>
+
+<file path="phase-4_integration/src/history.py">
+"""
+히스토리 관리 모듈
+- 생성/업로드된 영상 기록 관리
+- JSON 파일 기반 저장
+"""
+
+import json
+from datetime import datetime
+from pathlib import Path
+
+HISTORY_DIR = Path(__file__).resolve().parent.parent / "history"
+
+
+def save_history(
+    date: str,
+    headline: str,
+    video_path: str,
+    upload_result: dict | None = None,
+    metadata: dict | None = None,
+    tone: str = "",
+    duration: int = 0,
+) -> str:
+    """영상 생성/업로드 기록 저장.
+
+    Returns:
+        저장된 히스토리 파일 경로
+    """
+    HISTORY_DIR.mkdir(parents=True, exist_ok=True)
+
+    entry = {
+        "date": date,
+        "headline": headline,
+        "video_path": video_path,
+        "tone": tone,
+        "duration": duration,
+        "created_at": datetime.now().isoformat(),
+        "upload": upload_result,
+        "metadata": metadata,
+    }
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"{date}_{timestamp}.json"
+    filepath = HISTORY_DIR / filename
+
+    with open(filepath, "w", encoding="utf-8") as f:
+        json.dump(entry, f, ensure_ascii=False, indent=2)
+
+    return str(filepath)
+
+
+def get_history(limit: int = 50) -> list[dict]:
+    """히스토리 목록 조회 (최신순).
+
+    Returns:
+        히스토리 항목 리스트
+    """
+    if not HISTORY_DIR.exists():
+        return []
+
+    files = sorted(HISTORY_DIR.glob("*.json"), reverse=True)[:limit]
+    entries = []
+
+    for f in files:
+        try:
+            with open(f, "r", encoding="utf-8") as fp:
+                data = json.load(fp)
+                data["_filename"] = f.name
+                entries.append(data)
+        except (json.JSONDecodeError, IOError):
+            continue
+
+    return entries
+
+
+def get_history_by_date(date: str) -> list[dict]:
+    """특정 날짜의 히스토리 조회."""
+    if not HISTORY_DIR.exists():
+        return []
+
+    files = sorted(HISTORY_DIR.glob(f"{date}_*.json"), reverse=True)
+    entries = []
+
+    for f in files:
+        try:
+            with open(f, "r", encoding="utf-8") as fp:
+                data = json.load(fp)
+                data["_filename"] = f.name
+                entries.append(data)
+        except (json.JSONDecodeError, IOError):
+            continue
+
+    return entries
+</file>
+
+<file path="phase-4_integration/src/metadata_generator.py">
+"""
+Gemini API로 업로드 메타데이터 자동 생성
+- YouTube 제목/설명/태그
+- Instagram 캡션/해시태그
+- Twitter 트윗 텍스트
+"""
+
+import json
+import re
+
+from google import genai
+from google.genai import types
+
+METADATA_PROMPT = """\
+다음 MLB 숏폼 대본을 기반으로 각 소셜 미디어 플랫폼에 맞는 업로드 메타데이터를 생성해주세요.
+
+대본:
+{script}
+
+뉴스 제목: {headline}
+
+조건:
+- YouTube 제목은 50자 이내, 클릭을 유도하는 제목
+- YouTube 설명에 #Shorts 태그 포함
+- Instagram 캡션은 이모지 활용, 해시태그 10개
+- Twitter는 280자 이내
+
+아래 JSON 형식으로만 출력하세요:
+
+{{
+  "youtube": {{
+    "title": "영상 제목",
+    "description": "영상 설명\\n\\n#Shorts #MLB",
+    "tags": ["MLB", "야구", "오타니", "숏폼"]
+  }},
+  "instagram": {{
+    "caption": "인스타그램 캡션 텍스트",
+    "hashtags": ["#MLB", "#야구", "#숏폼"]
+  }},
+  "twitter": {{
+    "tweet_text": "트위터 텍스트"
+  }}
+}}
+"""
+
+
+def generate_metadata(
+    api_key: str,
+    script_text: str,
+    headline: str = "",
+) -> dict:
+    """대본 기반 업로드 메타데이터 생성.
+
+    Args:
+        api_key: Gemini API key
+        script_text: 대본 전체 텍스트
+        headline: 뉴스 제목
+
+    Returns:
+        {"youtube": {...}, "instagram": {...}, "twitter": {...}}
+    """
+    client = genai.Client(api_key=api_key)
+
+    prompt = METADATA_PROMPT.format(
+        script=script_text,
+        headline=headline,
+    )
+
+    response = client.models.generate_content(
+        model="gemini-2.0-flash-lite",
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            temperature=0.7,
+            max_output_tokens=1024,
+        ),
+    )
+
+    raw_text = response.text.strip()
+    json_match = re.search(r"```json\s*(.*?)\s*```", raw_text, re.DOTALL)
+    json_str = json_match.group(1) if json_match else raw_text
+
+    return json.loads(json_str)
+</file>
+
+<file path="phase-4_integration/src/pipeline_config.py">
+"""
+통합 파이프라인 환경변수 로더
+- 프로젝트 루트 .env → 각 Phase .env 순서로 로드
+- 먼저 찾은 값 우선 (override=False)
+"""
+
+import os
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+# 프로젝트 루트 (MLB-Daily-AI-Creator/)
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+
+# 각 Phase .env 경로 (우선순위순)
+ENV_FILES = [
+    PROJECT_ROOT / ".env",
+    PROJECT_ROOT / "phase-1_research-automation" / ".env",
+    PROJECT_ROOT / "phase-2_app-prototype" / ".env",
+    PROJECT_ROOT / "phase-3_video-pipeline" / ".env",
+    PROJECT_ROOT / "phase-4_integration" / ".env",
+]
+
+
+def load_all_env() -> None:
+    """모든 .env 파일 로드 (override=False: 먼저 찾은 값 우선)."""
+    for env_path in ENV_FILES:
+        if env_path.exists():
+            load_dotenv(env_path, override=False)
+
+
+def get_config() -> dict:
+    """모든 API 키를 딕셔너리로 반환."""
+    return {
+        "GEMINI_API_KEY": os.environ.get("GEMINI_API_KEY", ""),
+        "PEXELS_API_KEY": os.environ.get("PEXELS_API_KEY", ""),
+        "GMAIL_ADDRESS": os.environ.get("GMAIL_ADDRESS", ""),
+        "GMAIL_APP_PASSWORD": os.environ.get("GMAIL_APP_PASSWORD", ""),
+        "RECIPIENT_EMAIL": os.environ.get("RECIPIENT_EMAIL", ""),
+    }
+
+
+def validate_config(config: dict, required_keys: list[str]) -> list[str]:
+    """누락된 키 반환.
+
+    Args:
+        config: get_config() 결과
+        required_keys: 필수 키 목록
+
+    Returns:
+        누락된 키 이름 리스트 (빈 리스트면 모두 충족)
+    """
+    return [key for key in required_keys if not config.get(key)]
+</file>
+
+<file path="phase-4_integration/src/youtube_uploader.py">
+"""
+YouTube Shorts 업로드 모듈
+- YouTube Data API v3
+- OAuth 2.0 인증
+- 숏폼 영상 업로드 + 메타데이터 설정
+"""
+
+import json
+import os
+from pathlib import Path
+
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
+
+SCOPES = ["https://www.googleapis.com/auth/youtube"]
+TOKEN_FILE = Path(__file__).resolve().parent.parent / "token.json"
+CLIENT_SECRET_FILE = Path(__file__).resolve().parent.parent / "client_secret.json"
+
+
+def get_authenticated_service():
+    """OAuth 2.0 인증 후 YouTube API 서비스 객체 반환."""
+    creds = None
+
+    if TOKEN_FILE.exists():
+        creds = Credentials.from_authorized_user_file(str(TOKEN_FILE), SCOPES)
+
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            if not CLIENT_SECRET_FILE.exists():
+                raise FileNotFoundError(
+                    f"client_secret.json이 필요합니다.\n"
+                    f"Google Cloud Console에서 OAuth 2.0 클라이언트 ID를 생성하고\n"
+                    f"{CLIENT_SECRET_FILE} 경로에 저장하세요."
+                )
+            flow = InstalledAppFlow.from_client_secrets_file(
+                str(CLIENT_SECRET_FILE), SCOPES
+            )
+            creds = flow.run_local_server(port=8090, open_browser=True)
+
+        with open(TOKEN_FILE, "w") as f:
+            f.write(creds.to_json())
+
+    return build("youtube", "v3", credentials=creds)
+
+
+def upload_to_youtube(
+    video_path: str,
+    title: str,
+    description: str,
+    tags: list[str] | None = None,
+    privacy: str = "private",
+) -> dict:
+    """YouTube에 영상 업로드.
+
+    Args:
+        video_path: 업로드할 영상 파일 경로
+        title: 영상 제목
+        description: 영상 설명
+        tags: 태그 리스트
+        privacy: "public", "private", "unlisted"
+
+    Returns:
+        {"video_id": str, "url": str}
+    """
+    youtube = get_authenticated_service()
+
+    body = {
+        "snippet": {
+            "title": title,
+            "description": description,
+            "tags": tags or [],
+            "categoryId": "17",  # Sports
+        },
+        "status": {
+            "privacyStatus": privacy,
+            "selfDeclaredMadeForKids": False,
+        },
+    }
+
+    media = MediaFileUpload(
+        video_path,
+        mimetype="video/mp4",
+        resumable=True,
+        chunksize=1024 * 1024,  # 1MB chunks
+    )
+
+    request = youtube.videos().insert(
+        part="snippet,status",
+        body=body,
+        media_body=media,
+    )
+
+    response = None
+    while response is None:
+        status, response = request.next_chunk()
+        if status:
+            print(f"  업로드 진행: {int(status.progress() * 100)}%")
+
+    video_id = response["id"]
+    return {
+        "video_id": video_id,
+        "url": f"https://youtube.com/shorts/{video_id}",
+    }
+</file>
+
+<file path="requirements.txt">
+# MLB Daily AI Creator
+# Phase 1: Research
+google-genai>=1.0.0
+python-dotenv>=1.0.0
+jinja2>=3.1.0
+
+# Phase 2: Streamlit Dashboard
+streamlit>=1.40.0
+
+# Phase 3: Video Pipeline
+edge-tts>=7.0
+moviepy>=2.0
+Pillow>=10.0
+requests>=2.30
+
+# Phase 4: YouTube Upload
+google-api-python-client>=2.0
+google-auth-oauthlib>=1.0
+google-auth-httplib2>=0.1
+</file>
+
+<file path=".env.example">
+# MLB Daily AI Creator - 환경변수 템플릿
+# 이 파일을 .env로 복사한 뒤 값을 채워주세요.
+
+# Gemini API (필수) - Google AI Studio에서 발급
+GEMINI_API_KEY=your_gemini_api_key_here
+
+# Pexels API (선택) - 배경 영상 다운로드용, 없으면 단색 배경 사용
+PEXELS_API_KEY=your_pexels_api_key_here
+
+# Gmail (선택) - 뉴스 이메일 발송용
+GMAIL_ADDRESS=your_email@gmail.com
+GMAIL_APP_PASSWORD=your_16_char_app_password
+RECIPIENT_EMAIL=your_email@gmail.com
+
+# Supabase (선택) - Fantasy Draft App 연동용
+# 설정하면 MLB 뉴스가 Supabase mlb_news 테이블에 자동 저장됨
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_KEY=your_service_role_key_here
+</file>
+
+<file path="phase-1_research-automation/GETTING-STARTED.md">
+# Phase 1 시작하기
+
+## 바로 할 일 (Quick Start)
+
+### 1단계: API 키 발급 (10분)
+1. [Google AI Studio](https://aistudio.google.com/) 접속 → Google 로그인
+2. 좌측 "Get API Key" → "Create API Key" 클릭
+3. 발급된 Gemini API 키를 메모
+
+### 2단계: Gmail 앱 비밀번호 발급 (5분)
+1. Google 계정 → 보안 → 2단계 인증 활성화
+2. https://myaccount.google.com/apppasswords 접속
+3. 앱 이름 입력 (예: "MLB Daily") → 16자리 앱 비밀번호 생성
+
+### 3단계: 환경변수 설정 (2분)
+```bash
+cd phase-1_research-automation
+cp .env.example .env
+```
+`.env` 파일을 열어 값 채우기:
+```
+GEMINI_API_KEY=발급받은_키
+GMAIL_ADDRESS=your_email@gmail.com
+GMAIL_APP_PASSWORD=16자리_앱_비밀번호
+RECIPIENT_EMAIL=수신할_이메일
+```
+
+### 4단계: 로컬 실행 테스트 (5분)
+```bash
+pip install -r requirements.txt
+python src/main.py
+```
+- 실행 후 지정한 이메일로 MLB 뉴스 브리핑 수신 확인
+- `outputs/` 폴더에 JSON 결과 파일 저장됨
+
+### 5단계: GitHub Actions 자동화 설정 (5분)
+1. GitHub 리포의 Settings → Secrets and variables → Actions
+2. 아래 시크릿 추가:
+   - `GEMINI_API_KEY`
+   - `GMAIL_ADDRESS`
+   - `GMAIL_APP_PASSWORD`
+   - `RECIPIENT_EMAIL`
+3. 매일 KST 08:00 (UTC 23:00)에 자동 실행됨
+4. Actions 탭에서 "Run workflow"로 수동 실행도 가능
+
+## 파이프라인 구조
+
+```
+researcher.py  →  formatter.py  →  notifier.py
+(Gemini API)     (HTML 변환)      (Gmail 전송)
+```
+
+1. **researcher.py**: Gemini 2.0 Flash + Google Search grounding으로 실시간 MLB 뉴스 수집
+2. **formatter.py**: JSON 결과를 Jinja2 HTML 이메일로 변환
+3. **notifier.py**: smtplib로 Gmail SMTP 전송
+
+## 문제 해결
+
+| 문제 | 해결 방법 |
+|------|-----------|
+| API 키 오류 | Google AI Studio에서 키 재생성 |
+| JSON 파싱 실패 | `outputs/` 폴더의 원본 응답 확인 후 프롬프트 조정 |
+| 이메일 미수신 | Gmail 앱 비밀번호 확인, 스팸함 확인 |
+| GitHub Actions 실패 | Actions 탭에서 로그 확인 → Secrets 설정 재확인 |
+| 뉴스가 부정확 | Google Search grounding이 자동 활성화되어 있는지 확인 |
+</file>
+
+<file path="phase-1_research-automation/requirements.txt">
+google-generativeai>=0.8.3
+google-genai>=0.2.0
+python-dotenv>=1.0.0
+jinja2>=3.1.0
+supabase>=2.0.0
+</file>
+
+<file path="phase-1_research-automation/src/formatter.py">
+from datetime import datetime, timedelta
+
+def format_email(news_data: dict) -> tuple[str, str]:
+    """
+    뉴스 데이터를 HTML 이메일 본문으로 변환한다.
+    반환값: (제목, HTML본문)
+    """
+    retrieved_at = news_data.get("retrieved_at", datetime.now().strftime("%Y-%m-%d %H:%M"))
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    
+    # 데이터 기준 시간 (Data Reference Time)
+    # JSON에 있으면 쓰고, 없으면 계산 (yesterday 7am ~ today 7am)
+    ref_time = news_data.get("data_reference_time")
+    if not ref_time:
+        now = datetime.now()
+        today_7am = now.replace(hour=7, minute=0, second=0, microsecond=0)
+        if now >= today_7am:
+            end_time = today_7am
+            start_time = end_time - timedelta(days=1)
+        else:
+            end_time = today_7am
+            start_time = end_time - timedelta(days=1)
+        ref_time = f"{start_time.strftime('%Y-%m-%d %H:%M')} ~ {end_time.strftime('%Y-%m-%d %H:%M')}"
+
+    # 제목
+    subject = f"[MLB Daily] {today_str} 오늘의 핵심 뉴스"
+
+    # HTML 스타일
+    style = """
+    <style>
+        body { font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+        h1 { color: #002D62; border-bottom: 2px solid #D31145; padding-bottom: 10px; margin-bottom: 5px; }
+        .ref-time { color: #D31145; font-weight: bold; font-size: 13px; margin-bottom: 20px; background-color: #fff0f5; padding: 8px; border-radius: 4px; text-align: center; }
+        h2 { color: #D31145; margin-top: 30px; border-left: 5px solid #002D62; padding-left: 10px; }
+        .news-item { margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+        .news-title { font-size: 16px; font-weight: bold; color: #1a1a1a; margin-bottom: 5px; }
+        .news-summary { font-size: 14px; color: #555; margin-bottom: 5px; }
+        .news-meta { font-size: 12px; color: #888; }
+        .news-meta a { color: #002D62; text-decoration: none; }
+        .no-news { font-style: italic; color: #888; text-align: center; padding: 20px; background: #fafafa; border-radius: 8px; }
+    </style>
+    """
+
+    # 본문 구성
+    body_content = f"<h1>MLB Daily Report ({today_str})</h1>"
+    body_content += f"<div class='ref-time'>데이터 기준 시간: {ref_time}</div>"
+
+    # 1. 핵심 뉴스
+    body_content += "<h2>🔥 핵심 뉴스 (Main News)</h2>"
+    main_news = news_data.get("main_news", [])
+    if main_news:
+        for idx, item in enumerate(main_news, 1):
+            source_link = ""
+            if item.get("source_url"):
+                source_link = f" | <a href='{item['source_url']}'>원문보기</a>"
+            
+            body_content += f"""
+            <div class="news-item">
+                <div class="news-title">{idx}. {item.get('headline')}</div>
+                <div class="news-summary">{item.get('summary')}</div>
+                <div class="news-meta">
+                    {item.get('source', 'Unknown')} | {item.get('published_at', '')} {source_link}
+                </div>
+            </div>
+            """
+    else:
+        body_content += "<p class='no-news'>해당 범위 내 수집된 정보 없음</p>"
+
+    # 2. 선수 이동
+    transactions = news_data.get("transactions", [])
+    if transactions:
+        body_content += "<h2>⚾ 선수 이동 & 루머 (Transactions)</h2>"
+        for item in transactions:
+            type_badge = f"[{item.get('type', 'news').upper()}]"
+            body_content += f"""
+            <div class="news-item">
+                <div class="news-title">{type_badge} {item.get('headline')}</div>
+                <div class="news-summary">{item.get('summary')}</div>
+                <div class="news-meta">{item.get('published_at', '')}</div>
+            </div>
+            """
+    # 3. 유망주
+    prospects = news_data.get("prospects", [])
+    if prospects:
+        body_content += "<h2>🌟 유망주 소식 (Prospects)</h2>"
+        for item in prospects:
+            body_content += f"""
+            <div class="news-item">
+                <div class="news-title">[{item.get('team', 'MLB')}] {item.get('player_name')}</div>
+                <div class="news-summary">{item.get('summary')}</div>
+                <div class="news-meta">{item.get('published_at', '')}</div>
+            </div>
+            """
+
+    # 최종 HTML 조립
+    html_body = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>{style}</head>
+    <body>
+        {body_content}
+        <div style="margin-top: 40px; font-size: 11px; color: #aaa; text-align: center;">
+            MLB Daily AI Creator by Gemini
+        </div>
+    </body>
+    </html>
+    """
+
+    return subject, html_body
+</file>
+
+<file path="phase-1_research-automation/src/main.py">
+"""
+MLB Daily AI Creator — Phase 1 파이프라인
+리서치(7AM-7AM) → 포맷 → 이메일 전송 → Supabase(mlb_daily_news) 업로드
+"""
+
+import os
+import sys
+import io
+import json
+from datetime import datetime
+from pathlib import Path
+
+# Windows cp949 인코딩 문제 방지
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
+sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8")
+
+from dotenv import load_dotenv
+
+# .env 로드
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+
+from researcher import research_mlb_news
+from formatter import format_email
+from notifier import send_email
+
+
+def main():
+    print(f"[START] MLB Daily Research - {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+
+    # 환경변수 확인
+    api_key = os.environ.get("GEMINI_API_KEY")
+    gmail_addr = os.environ.get("GMAIL_ADDRESS")
+    gmail_pw = os.environ.get("GMAIL_APP_PASSWORD")
+    recipient = os.environ.get("RECIPIENT_EMAIL", gmail_addr)
+
+    if not api_key:
+        print("[ERROR] GEMINI_API_KEY 환경변수가 설정되지 않았습니다.")
+        sys.exit(1)
+    if not gmail_addr or not gmail_pw:
+        print("[ERROR] GMAIL_ADDRESS / GMAIL_APP_PASSWORD 환경변수가 설정되지 않았습니다.")
+        sys.exit(1)
+
+    # Supabase 환경변수 (선택)
+    supabase_url = os.environ.get("SUPABASE_URL")
+    supabase_key = os.environ.get("SUPABASE_SERVICE_KEY")
+    has_supabase = bool(supabase_url and supabase_key)
+    total_steps = 4 if has_supabase else 3
+
+    # 1. 리서치
+    print(f"[1/{total_steps}] Gemini API로 MLB 뉴스 수집 중 (Strict Daily)...")
+    news_data = research_mlb_news(api_key)
+    
+    # 결과 요약 출력
+    main_count = len(news_data.get('main_news', []))
+    trans_count = len(news_data.get('transactions', []))
+    prospect_count = len(news_data.get('prospects', []))
+    
+    print(f"  → Main News: {main_count}건")
+    print(f"  → Transactions: {trans_count}건")
+    print(f"  → Prospects: {prospect_count}건 수집 완료")
+
+    # 디버그: JSON 저장
+    out_dir = Path(__file__).resolve().parent.parent / "outputs"
+    out_dir.mkdir(exist_ok=True)
+    today = datetime.now().strftime("%Y-%m-%d")
+    with open(out_dir / f"{today}.json", "w", encoding="utf-8") as f:
+        json.dump(news_data, f, ensure_ascii=False, indent=2)
+    print(f"  → JSON 저장: outputs/{today}.json")
+
+    # 2. 포맷
+    print(f"[2/{total_steps}] HTML 이메일 포맷 생성 중...")
+    subject, html_body = format_email(news_data)
+    print(f"  → 제목: {subject}")
+
+    # 3. 전송
+    print(f"[3/{total_steps}] 이메일 전송 중 → {recipient}")
+    send_email(gmail_addr, gmail_pw, recipient, subject, html_body)
+
+    # 4. Supabase 업로드 (선택)
+    if has_supabase:
+        print(f"[4/{total_steps}] Supabase에 뉴스 데이터 업로드 중 (mlb_news)...")
+        try:
+            from uploader import upload_to_supabase
+            upload_to_supabase(news_data, supabase_url, supabase_key)
+        except Exception as e:
+            print(f"  [WARN] Supabase 업로드 실패 (이메일은 정상 전송됨): {e}")
+    else:
+        print("[SKIP] SUPABASE_URL 미설정 — Supabase 업로드 건너뜀")
+
+    print(f"[DONE] 파이프라인 완료")
+
+
+if __name__ == "__main__":
+    main()
+</file>
+
+<file path="phase-1_research-automation/src/researcher.py">
+import os
+import json
+import time
+from datetime import datetime, timedelta
+from google import genai
+from google.genai import types
+
+# NOTE: JSON 예시의 중괄호 {{}}는 Python str.format()과 충돌하므로 {{ }}로 이스케이프.
+RESEARCH_PROMPT = """
+당신은 메이저리그(MLB) 데이터를 엄격하게 검증하는 뉴스 리포터입니다.
+주어진 시간 범위 내의 MLB 뉴스, 루머, 로스터 이동, 유망주 소식을 수집하여 아래 섹션별로 정리해주세요.
+
+## [데이터 검색 및 수집 엄격 규칙] (CRITICAL - VIOLATION IS NOT ALLOWED)
+
+1.  **검색 연산자 강제 사용**:
+    - 검색 시 반드시 날짜 제한 연산자를 포함하세요. (예: `MLB news after:{start_date_only}`)
+    - '최신순' 정렬 데이터를 우선 확인하세요.
+
+2.  **데이터 무결성 검증 (Data Integrity)**:
+    - **내용-날짜 일치 확인**: 기사 내용이 과거에 이미 종결된 사건(예: 수년 전의 연장 계약, 이미 복귀한 선수의 옛 부상 소식 등)인지 반드시 내부 지식과 대조하세요.
+    - **날짜 날조 금지 (No Date Fabrication)**: 기사 원문의 메타데이터에 기록된 **실제 발행 연도**를 확인하세요. 만약 **{current_year}년**이 아닌 기사라면, 절대 날짜를 {current_year}년으로 바꾸어 출력하지 말고 **즉시 폐기(Discard)**하세요.
+    - **이중 타임스탬프 검증**: 수집된 기사의 `published_at`이 {start_time} ~ {end_time} (KST) 범위를 벗어나면 폐기하세요.
+
+3.  **최소 정보 원칙 (Minimum Information Principle)**:
+    - 지난 24시간 이내의 "새로운(New)" 소식이 없다면 해당 섹션은 비워두거나 빈 리스트(`[]`)로 반환하세요.
+    - **과거 기사를 최신인 것처럼 속여 보고하는 것은 치명적인 오류입니다.**
+
+4.  **시스템 변수**:
+    - CURRENT_YEAR: {current_year}
+    - CURRENT_DATE: {current_date_str}
+    - SEARCH_WINDOW: {start_time} ~ {end_time}
+
+## 섹션별 작성 지침
+
+### 1. 핵심 뉴스 (main_news)
+- **내용**: 오늘({start_time} 이후) 발생한 가장 중요한 MLB 뉴스 10개를 선정합니다.
+- **포함 대상**: 경기 결과, 주요 기록, 부상 소식, 인터뷰 등.
+- **한국 선수**: 중요도에 따라 포함.
+- **요약 방식**: "현상의 원인"이나 "향후 영향"을 포함하여 깊이 있게 요약. (한국어)
+- **번역 규칙**: 팀명/선수명 **한국어** 표기.
+- **필수 필드**: `headline`, `summary`, `published_at` (YYYY-MM-DD HH:MM), `source`, `source_url`
+
+### 2. 선수 이동 (transactions)
+- **조건**: 해당 내용이 없으면 빈 리스트.
+- **포함 대상**: 공식 이적/계약, 루머, 로스터 변경.
+- **필수 필드**: `headline`, `summary`, `type`, `published_at`
+
+### 3. 유망주 (prospects)
+- **조건**: 해당 내용이 없으면 빈 리스트.
+- **포함 대상**: Top 5 유망주 콜업 소식.
+- **필수 필드**: `headline`, `summary`, `team`, `player_name`, `published_at`
+
+## 출력 형식 (JSON)
+```json
+{{
+  "retrieved_at": "YYYY-MM-DD HH:MM",
+  "data_reference_time": "{start_time} ~ {end_time}",
+  "main_news": [
+    {{
+      "rank": 1,
+      "headline": "...",
+      "summary": "...",
+      "published_at": "YYYY-MM-DD HH:MM",
+      "source": "...",
+      "source_url": "..."
+    }}
+  ],
+  "transactions": [ ... ],
+  "prospects": [ ... ]
+}}
+```
+"""
+
+def research_mlb_news(api_key: str) -> dict:
+    # Use google.genai Client
+    client = genai.Client(api_key=api_key)
+    
+    # 1. 7AM - 7AM 시간 윈도우 계산
+    now = datetime.now()
+    today_7am = now.replace(hour=7, minute=0, second=0, microsecond=0)
+    
+    if now >= today_7am:
+        end_time = today_7am
+        start_time = end_time - timedelta(days=1)
+    else:
+        end_time = today_7am
+        start_time = end_time - timedelta(days=1)
+
+    start_str = start_time.strftime("%Y-%m-%d %H:%M")
+    end_str = end_time.strftime("%Y-%m-%d %H:%M")
+    current_date_str = now.strftime("%Y-%m-%d %H:%M")
+    current_year = now.year
+    start_date_only = start_time.strftime("%Y-%m-%d")
+
+    print(f"[INFO] 검색 윈도우: {start_str} ~ {end_str}")
+
+    full_prompt = RESEARCH_PROMPT.format(
+        start_time=start_str, 
+        end_time=end_str,
+        current_date_str=current_date_str,
+        current_year=current_year,
+        start_date_only=start_date_only
+    )
+
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=full_prompt,
+            config=types.GenerateContentConfig(
+                temperature=0.1,
+                top_p=0.8,
+                top_k=40,
+                max_output_tokens=8192,
+                tools=[types.Tool(
+                    google_search=types.GoogleSearch()
+                )]
+            )
+        )
+        
+        text_response = response.text.strip()
+        
+        if text_response.startswith("```json"):
+            text_response = text_response[7:]
+        if text_response.endswith("```"):
+            text_response = text_response[:-3]
+            
+        try:
+            data = json.loads(text_response)
+        except json.JSONDecodeError as e:
+             print(f"[ERROR] JSON Decode Error: {e}")
+             print(f"[DEBUG] Full Raw Response: {text_response}")
+             return {"main_news": [], "transactions": [], "prospects": []}
+                
+        _validate(data)
+        
+        # 2차: Python Level 날짜 필터링 (Double Verification)
+        _filter_by_date_window(data, start_time, end_time)
+        
+        return data
+
+    except Exception as e:
+        print(f"[ERROR] Gemini API 호출 중 오류 발생: {e}")
+        import traceback
+        traceback.print_exc()
+        return {"main_news": [], "transactions": [], "prospects": []}
+
+def _validate(data: dict) -> None:
+    required_keys = ["main_news", "transactions", "prospects"]
+    for key in required_keys:
+        if key not in data:
+            data[key] = []
+
+def _filter_by_date_window(data: dict, start_dt: datetime, end_dt: datetime) -> None:
+    """
+    수집된 뉴스 중 start_dt ~ end_dt 범위를 벗어나는 것을 제거합니다.
+    (엄격 모드: 범위를 벗어나면 폐기)
+    """
+    
+    def is_in_window(date_str):
+        if not date_str: return False
+        try:
+            formats = ["%Y-%m-%d %H:%M", "%Y-%m-%d", "%Y-%m-%dT%H:%M:%S"]
+            dt = None
+            for fmt in formats:
+                try:
+                    dt = datetime.strptime(date_str, fmt)
+                    break
+                except ValueError:
+                    continue
+            
+            if dt:
+                # Buffer reduced to 30 mins to be stricter.
+                return (start_dt - timedelta(minutes=30)) <= dt <= (end_dt + timedelta(minutes=30))
+            
+            return False 
+        except:
+            return False
+
+    keys = ["main_news", "transactions", "prospects"]
+    for key in keys:
+        if key in data:
+            original_items = data[key]
+            valid_items = [item for item in original_items if is_in_window(item.get("published_at"))]
+            
+            if len(valid_items) < len(original_items):
+                rejected_items = [item for item in original_items if item not in valid_items]
+                print(f"  [FILTER] {key}: {len(original_items)} -> {len(valid_items)} (Date Constraint Violation)")
+                print(f"  [DEBUG] Rejected dates in {key}: {[item.get('published_at') for item in rejected_items]}")
+            
+            data[key] = valid_items
+</file>
+
+<file path="phase-1_research-automation/templates/email.html">
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MLB Daily AI Creator</title>
+<style>
+  body { margin: 0; padding: 0; background-color: #f4f4f7; font-family: -apple-system, 'Segoe UI', sans-serif; color: #333; }
+  .container { max-width: 680px; margin: 0 auto; background-color: #fff; }
+  .header { background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d); padding: 28px 24px; text-align: center; }
+  .header h1 { color: #fff; margin: 0; font-size: 24px; font-weight: 700; }
+  .header p { color: rgba(255,255,255,0.85); margin: 6px 0 0; font-size: 14px; }
+  .section { padding: 20px 24px; border-bottom: 1px solid #eee; }
+  .section:last-of-type { border-bottom: none; }
+  .section-title { font-size: 18px; font-weight: 700; color: #1a2a6c; border-bottom: 2px solid #1a2a6c; padding-bottom: 8px; margin-bottom: 16px; }
+  
+  /* 핵심 뉴스 */
+  .news-item { padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
+  .news-item:last-child { border-bottom: none; }
+  .news-top { display: flex; align-items: flex-start; }
+  .news-rank { flex-shrink: 0; background-color: #1a2a6c; color: #fff; border-radius: 4px; width: 28px; height: 24px; text-align: center; line-height: 24px; font-size: 13px; font-weight: 700; margin-right: 12px; margin-top: 1px; }
+  .news-rank.buzz-high { background-color: #c0392b; }
+  .news-rank.buzz-medium { background-color: #d35400; }
+  .news-rank.buzz-low { background-color: #7f8c8d; }
+  .news-body { flex: 1; }
+  .news-headline { font-size: 16px; font-weight: 700; color: #2c3e50; line-height: 1.4; margin: 0 0 4px; }
+  .news-headline a { color: #2c3e50; text-decoration: none; }
+  .news-headline a:hover { text-decoration: underline; }
+  .news-summary { font-size: 14px; color: #555; margin: 0 0 8px; line-height: 1.6; }
+  .news-meta { font-size: 12px; color: #999; }
+  .news-meta span { margin-right: 10px; }
+  .tag { display: inline-block; background-color: #ecf0f1; border-radius: 3px; padding: 2px 8px; font-size: 11px; color: #34495e; font-weight: 600; margin-right: 6px; }
+
+  /* 선수 이동 & 유망주 */
+  .sub-section { margin-bottom: 20px; }
+  .sub-section:last-child { margin-bottom: 0; }
+  .sub-section-title { font-size: 15px; font-weight: 700; color: #34495e; border-bottom: 1px solid #dfe6ed; padding-bottom: 6px; margin-bottom: 10px; }
+  .movement-item, .prospect-item { padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+  .movement-item:last-child, .prospect-item:last-child { border-bottom: none; }
+  .movement-headline, .prospect-headline { font-size: 14px; font-weight: 600; color: #333; margin: 0 0 4px; }
+  .movement-summary, .prospect-summary { font-size: 13px; color: #666; margin: 0 0 6px; line-height: 1.5; }
+  .movement-meta, .prospect-meta { font-size: 11px; color: #999; }
+
+  .footer { text-align: center; padding: 20px; font-size: 12px; color: #aaa; border-top: 1px solid #eee; }
+</style>
+</head>
+<body>
+<div class="container">
+  <!-- 헤더 -->
+  <div class="header">
+    <h1>MLB Daily AI Creator</h1>
+    <p>{{ data.retrieved_at }} 기준</p>
+  </div>
+
+  <!-- 핵심 뉴스 -->
+  {% if data.core_news %}
+  <div class="section">
+    <div class="section-title">핵심 뉴스</div>
+    {% for item in data.core_news %}
+    <div class="news-item">
+      <div class="news-top">
+        <div class="news-rank buzz-{{ item.buzz | default('low') }}">{{ item.rank }}</div>
+        <div class="news-body">
+          <div class="news-headline">
+            {% if item.source_url %}<a href="{{ item.source_url }}" target="_blank" rel="noopener noreferrer">{{ item.headline }}</a>{% else %}{{ item.headline }}{% endif %}
+          </div>
+          <p class="news-summary">{{ item.summary }}</p>
+          <div class="news-meta">
+            <span class="tag">{{ item.category | upper }}</span>
+            <span><b>출처:</b> {{ item.source }} | {{ item.published_at }}</span>
+            {% if item.teams %}<span><b>팀:</b> {{ item.teams | join(', ') }}</span>{% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- 선수 이동 -->
+  {% set pm = data.player_movement %}
+  {% if pm.transactions or pm.rumors or pm.roster_moves %}
+  <div class="section">
+    <div class="section-title">선수 이동</div>
+    
+    {% if pm.transactions %}
+    <div class="sub-section">
+      <div class="sub-section-title">선수 이적/계약</div>
+      {% for item in pm.transactions %}
+      <div class="movement-item">
+        <div class="movement-headline">{{ item.headline }}</div>
+        <p class="movement-summary">{{ item.summary }}</p>
+        <div class="movement-meta"><b>출처:</b> {{ item.source }} | {{ item.published_at }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if pm.rumors %}
+    <div class="sub-section">
+      <div class="sub-section-title">이적 루머</div>
+      {% for item in pm.rumors %}
+      <div class="movement-item">
+        <div class="movement-headline">{{ item.headline }}</div>
+        <p class="movement-summary">{{ item.summary }}</p>
+        <div class="movement-meta"><b>출처:</b> {{ item.source }} | {{ item.published_at }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if pm.roster_moves %}
+    <div class="sub-section">
+      <div class="sub-section-title">로스터 변경</div>
+      {% for item in pm.roster_moves %}
+      <div class="movement-item">
+        <div class="movement-headline">{{ item.headline }}</div>
+        <p class="movement-summary">{{ item.summary }}</p>
+        <div class="movement-meta"><b>출처:</b> {{ item.source }} | {{ item.published_at }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- 유망주 동향 -->
+  {% if data.prospects %}
+  <div class="section">
+    <div class="section-title">유망주 동향</div>
+    {% for item in data.prospects %}
+    <div class="prospect-item">
+      <div class="prospect-headline">{{ item.headline }}</div>
+      <p class="prospect-summary">{{ item.summary }}</p>
+      <div class="prospect-meta">
+        <span><b>출처:</b> {{ item.source }} | {{ item.published_at }}</span>
+        {% if item.teams %}<span><b>팀:</b> {{ item.teams | join(', ') }}</span>{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- 푸터 -->
+  <div class="footer">
+    MLB Daily AI Creator &middot; Powered by Gemini
+  </div>
+</div>
+</body>
+</html>
+</file>
+
+<file path="phase-2_app-prototype/app.py">
+"""
+MLB Daily AI Creator - 통합 대시보드
+Streamlit 기반 뉴스 대시보드 + 숏폼 대본 생성 + 영상 생성 + YouTube 업로드
+"""
+
+import os
+import sys
+from pathlib import Path
+
+import streamlit as st
+from dotenv import load_dotenv
+
+# 각 Phase src를 import 경로에 추가
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "phase-1_research-automation" / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "phase-3_video-pipeline" / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "phase-4_integration" / "src"))
+
+# 통합 환경변수 로더 (fallback: 기존 load_dotenv)
+try:
+    from pipeline_config import load_all_env
+    load_all_env()
+except ImportError:
+    load_dotenv(Path(__file__).resolve().parent / ".env")
+
+from data_store import get_available_dates, get_news, save_script, get_scripts
+from script_generator import generate_script
+
+# Phase 1 리서치 함수
+try:
+    from researcher import research_mlb_news
+    HAS_RESEARCHER = True
+except ImportError:
+    HAS_RESEARCHER = False
+
+# Phase 3 영상 생성
+try:
+    from video_pipeline import run_pipeline as generate_video
+    HAS_VIDEO = True
+except ImportError:
+    HAS_VIDEO = False
+
+# Phase 4 업로드 + 메타데이터 + 히스토리
+try:
+    from youtube_uploader import upload_to_youtube
+    from metadata_generator import generate_metadata
+    from history import save_history, get_history
+    HAS_UPLOAD = True
+except ImportError:
+    HAS_UPLOAD = False
+
+# 전체 파이프라인 (원클릭)
+try:
+    from full_pipeline import run_full_pipeline, PipelineOptions
+    HAS_FULL_PIPELINE = True
+except ImportError:
+    HAS_FULL_PIPELINE = False
+
+API_KEY = os.environ.get("GEMINI_API_KEY", "")
+
+# ── 페이지 설정 ──
+st.set_page_config(
+    page_title="MLB Daily AI Creator",
+    page_icon="&#9918;",
+    layout="wide",
+)
+
+# ── 커스텀 CSS ──
+st.markdown("""
+<style>
+.news-card {
+    background: #f8f9fb;
+    border-radius: 10px;
+    padding: 20px;
+    border-left: 5px solid #1a2a6c;
+    margin-bottom: 12px;
+}
+.news-rank {
+    display: inline-block;
+    background: #1a2a6c;
+    color: white;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    text-align: center;
+    line-height: 28px;
+    font-weight: bold;
+    font-size: 14px;
+    margin-right: 8px;
+}
+.korean-card {
+    background: #fff8f0;
+    border-radius: 10px;
+    padding: 16px;
+    border-left: 5px solid #e67e22;
+    margin-bottom: 8px;
+}
+.shorts-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+}
+.shorts-high { background: #fde8e8; color: #e74c3c; }
+.shorts-medium { background: #fef3e2; color: #f39c12; }
+.shorts-low { background: #eee; color: #95a5a6; }
+.history-card {
+    background: #f0f4ff;
+    border-radius: 10px;
+    padding: 16px;
+    border-left: 5px solid #3b82f6;
+    margin-bottom: 10px;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# ── 사이드바 ──
+with st.sidebar:
+    st.title("MLB Daily AI Creator")
+
+    if not API_KEY:
+        API_KEY = st.text_input("Gemini API Key", type="password")
+
+    st.divider()
+
+    dates = get_available_dates()
+    if dates:
+        selected_date = st.selectbox("날짜 선택", dates, index=0)
+    else:
+        selected_date = None
+        st.warning("수집된 뉴스가 없습니다.")
+
+    if HAS_RESEARCHER and API_KEY:
+        if st.button("지금 뉴스 수집", use_container_width=True):
+            with st.spinner("Gemini로 뉴스 수집 중..."):
+                try:
+                    import json
+                    from datetime import datetime
+                    news_data = research_mlb_news(API_KEY)
+                    out_dir = Path(__file__).resolve().parent.parent / "phase-1_research-automation" / "outputs"
+                    out_dir.mkdir(exist_ok=True)
+                    today = datetime.now().strftime("%Y-%m-%d")
+                    with open(out_dir / f"{today}.json", "w", encoding="utf-8") as f:
+                        json.dump(news_data, f, ensure_ascii=False, indent=2)
+                    st.success(f"뉴스 {len(news_data.get('top_news', []))}건 수집 완료!")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"수집 실패: {e}")
+
+    st.divider()
+
+    menu_items = []
+    if HAS_FULL_PIPELINE:
+        menu_items.append("원클릭 자동 생성")
+    menu_items += ["뉴스 대시보드", "대본 생성", "저장된 대본"]
+    if HAS_UPLOAD:
+        menu_items.append("히스토리")
+    page = st.radio("메뉴", menu_items, label_visibility="collapsed")
+
+
+# ── 원클릭 자동 생성 ──
+if page == "원클릭 자동 생성":
+    st.header("원클릭 자동 생성")
+    st.caption("리서치 → 대본 → 영상 → 메타데이터 → YouTube 업로드까지 한번에 실행합니다.")
+
+    if not API_KEY:
+        st.warning("사이드바에서 Gemini API Key를 입력해주세요.")
+        st.stop()
+
+    # 옵션 선택
+    col_opt1, col_opt2, col_opt3 = st.columns(3)
+    with col_opt1:
+        pipe_tone = st.radio("말투", ["유머러스", "분석적", "열정적"], horizontal=True, key="pipe_tone")
+        pipe_duration = st.radio("길이", [30, 45, 60], horizontal=True, format_func=lambda x: f"{x}초", key="pipe_dur")
+    with col_opt2:
+        pipe_voice = st.radio("음성", ["male", "female"], horizontal=True,
+                              format_func=lambda x: "남성" if x == "male" else "여성", key="pipe_voice")
+        pipe_rank = st.number_input("뉴스 순위", min_value=1, max_value=5, value=1, key="pipe_rank")
+    with col_opt3:
+        pipe_privacy = st.selectbox(
+            "YouTube 공개 설정",
+            ["private", "unlisted", "public"],
+            format_func=lambda x: {"private": "비공개", "unlisted": "일부 공개", "public": "전체 공개"}[x],
+            key="pipe_privacy",
+        )
+        pipe_skip_upload = st.checkbox("YouTube 업로드 스킵", value=False, key="pipe_skip_upload")
+
+    st.divider()
+
+    if st.button("파이프라인 실행", type="primary", use_container_width=True):
+        options = PipelineOptions(
+            tone=pipe_tone,
+            duration=pipe_duration,
+            voice=pipe_voice,
+            news_rank=pipe_rank,
+            privacy=pipe_privacy,
+            skip_upload=pipe_skip_upload,
+            skip_email=True,
+        )
+
+        # 진행 상황 표시
+        progress_bar = st.progress(0)
+        status_text = st.empty()
+
+        stage_order = ["research", "script", "video", "metadata", "upload", "history"]
+        stage_labels = {
+            "research": "뉴스 수집",
+            "script": "대본 생성",
+            "video": "영상 생성",
+            "metadata": "메타데이터 생성",
+            "upload": "YouTube 업로드",
+            "history": "히스토리 저장",
+            "config": "설정 확인",
+        }
+
+        def streamlit_callback(stage: str, status: str, message: str):
+            label = stage_labels.get(stage, stage)
+            if status == "start":
+                idx = stage_order.index(stage) if stage in stage_order else 0
+                progress_bar.progress((idx) / len(stage_order))
+                status_text.info(f"**[{label}]** {message}")
+            elif status == "done":
+                idx = stage_order.index(stage) if stage in stage_order else 0
+                progress_bar.progress((idx + 1) / len(stage_order))
+                status_text.success(f"**[{label}]** {message}")
+            elif status == "error":
+                status_text.error(f"**[{label}]** {message}")
+            elif status == "skip":
+                status_text.warning(f"**[{label}]** {message}")
+
+        result = run_full_pipeline(options, callback=streamlit_callback)
+        progress_bar.progress(1.0)
+        st.session_state["pipeline_result"] = result
+
+    # 결과 표시
+    if "pipeline_result" in st.session_state:
+        result = st.session_state["pipeline_result"]
+        st.divider()
+
+        if result.success:
+            st.success(f"파이프라인 완료! (완료된 단계: {', '.join(result.stages_completed)})")
+        else:
+            st.error("파이프라인 실패")
+
+        if result.errors:
+            with st.expander("에러 목록"):
+                for err in result.errors:
+                    st.warning(err)
+
+        # 영상 미리보기
+        if result.video_path and Path(result.video_path).exists():
+            st.subheader("생성된 영상")
+            st.video(result.video_path)
+            with open(result.video_path, "rb") as f:
+                st.download_button(
+                    "영상 다운로드 (.mp4)", data=f,
+                    file_name=Path(result.video_path).name,
+                    mime="video/mp4", use_container_width=True,
+                )
+
+        # YouTube URL
+        if result.upload_result and result.upload_result.get("url"):
+            st.subheader("YouTube")
+            url = result.upload_result["url"]
+            st.markdown(f"**URL:** [{url}]({url})")
+
+        # 대본
+        if result.script:
+            with st.expander("생성된 대본"):
+                st.markdown(f"**훅:** {result.script.get('hook', '')}")
+                st.write(result.script.get("full_script", ""))
+                tags = result.script.get("suggested_hashtags", [])
+                if tags:
+                    st.caption(" ".join(tags))
+
+        # 메타데이터
+        if result.metadata:
+            with st.expander("생성된 메타데이터"):
+                yt = result.metadata.get("youtube", {})
+                st.markdown(f"**YouTube 제목:** {yt.get('title', '')}")
+                st.markdown(f"**설명:** {yt.get('description', '')}")
+                st.markdown(f"**태그:** {', '.join(yt.get('tags', []))}")
+                ig = result.metadata.get("instagram", {})
+                if ig:
+                    st.markdown(f"**Instagram:** {ig.get('caption', '')}")
+                tw = result.metadata.get("twitter", {})
+                if tw:
+                    st.markdown(f"**Twitter:** {tw.get('tweet_text', '')}")
+
+
+# ── 페이지 1: 뉴스 대시보드 ──
+elif page == "뉴스 대시보드":
+    if not selected_date:
+        st.info("사이드바에서 '지금 뉴스 수집' 버튼을 눌러 시작하세요.")
+        st.stop()
+
+    news_data = get_news(selected_date)
+    if not news_data:
+        st.warning(f"{selected_date} 뉴스 데이터가 없습니다.")
+        st.stop()
+
+    st.header(f"{selected_date} MLB 핵심 뉴스")
+
+    for news in news_data.get("top_news", []):
+        potential = news.get("shorts_potential", "low")
+        badge_class = f"shorts-{potential}"
+
+        st.markdown(f"""
+        <div class="news-card">
+            <span class="news-rank">{news.get('rank', '')}</span>
+            <strong style="font-size:16px;">{news.get('headline', '')}</strong>
+            <span class="shorts-badge {badge_class}" style="margin-left:8px;">{potential.upper()}</span>
+            <p style="margin-top:8px; color:#555; line-height:1.6;">{news.get('summary', '')}</p>
+            <p style="font-size:12px; color:#888;">
+                선수: {', '.join(news.get('players', [])) or '-'}
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    korean = news_data.get("korean_players", [])
+    if korean:
+        st.subheader("한국 선수 동향")
+        for player in korean:
+            st.markdown(f"""
+            <div class="korean-card">
+                <strong style="color:#e67e22;">{player.get('name', '')}</strong>
+                <span style="color:#888; margin-left:6px;">{player.get('team', '')}</span>
+                <p style="margin-top:4px; color:#444;">{player.get('result', '')}</p>
+                <p style="font-size:12px; color:#e67e22;">{player.get('highlight', '')}</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+    shorts = news_data.get("recommended_shorts_topic", {})
+    if shorts:
+        st.subheader("숏폼 콘텐츠 추천")
+        st.info(f"**{shorts.get('topic', '')}**\n\n{shorts.get('reason', '')}")
+        hook = shorts.get("script_hook", "")
+        if hook:
+            st.caption(f'후킹 멘트: "{hook}"')
+
+
+# ── 페이지 2: 대본 생성 ──
+elif page == "대본 생성":
+    st.header("숏폼 대본 생성")
+
+    if not API_KEY:
+        st.warning("사이드바에서 Gemini API Key를 입력해주세요.")
+        st.stop()
+
+    if not selected_date:
+        st.warning("수집된 뉴스가 없습니다. 먼저 뉴스를 수집해주세요.")
+        st.stop()
+
+    news_data = get_news(selected_date)
+    if not news_data:
+        st.warning(f"{selected_date} 뉴스 데이터가 없습니다.")
+        st.stop()
+
+    top_news = news_data.get("top_news", [])
+    if not top_news:
+        st.warning("뉴스가 비어있습니다.")
+        st.stop()
+
+    news_options = {f"#{n['rank']} {n['headline']}": n for n in top_news}
+    selected_headline = st.selectbox("뉴스 선택", list(news_options.keys()))
+    selected_news = news_options[selected_headline]
+
+    col1, col2 = st.columns(2)
+    with col1:
+        tone = st.radio("말투", ["유머러스", "분석적", "열정적"], horizontal=True)
+    with col2:
+        duration = st.radio("길이", [30, 45, 60], horizontal=True, format_func=lambda x: f"{x}초")
+
+    if st.button("대본 생성", type="primary", use_container_width=True):
+        with st.spinner("Gemini로 대본 생성 중..."):
+            try:
+                script = generate_script(API_KEY, selected_news, tone, duration)
+                st.session_state["generated_script"] = script
+                st.session_state["selected_news"] = selected_news
+            except Exception as e:
+                st.error(f"대본 생성 실패: {e}")
+
+    if "generated_script" in st.session_state:
+        script = st.session_state["generated_script"]
+
+        st.divider()
+        st.subheader("생성된 대본")
+
+        st.markdown("**훅 (첫 5초)**")
+        st.info(script.get("hook", ""))
+
+        st.markdown("**본문**")
+        st.write(script.get("body", ""))
+
+        st.markdown("**마무리**")
+        st.write(script.get("closing", ""))
+
+        st.divider()
+
+        st.markdown("**전체 대본 (편집 가능)**")
+        edited_script = st.text_area(
+            "전체 대본",
+            value=script.get("full_script", ""),
+            height=200,
+            label_visibility="collapsed",
+        )
+
+        tags = script.get("suggested_hashtags", [])
+        if tags:
+            st.caption(" ".join(tags))
+
+        # 버튼 행
+        if HAS_VIDEO:
+            col_save, col_video, col_regen = st.columns(3)
+        else:
+            col_save, col_regen = st.columns(2)
+            col_video = None
+
+        with col_save:
+            if st.button("대본 저장", use_container_width=True):
+                script["full_script"] = edited_script
+                path = save_script(selected_date, selected_news.get("rank", 0), script)
+                st.success("저장 완료!")
+
+        if col_video is not None:
+            with col_video:
+                voice = st.selectbox("음성", ["male", "female"], format_func=lambda x: "남성" if x == "male" else "여성", label_visibility="collapsed")
+                if st.button("영상 만들기", type="primary", use_container_width=True):
+                    with st.spinner("영상 생성 중... (1~3분 소요)"):
+                        try:
+                            players = selected_news.get("players", [])
+                            player_name = players[0] if players else None
+                            stats = selected_news.get("stats", None)
+
+                            video_path = generate_video(
+                                script_text=edited_script,
+                                output_dir=None,
+                                pexels_api_key=os.environ.get("PEXELS_API_KEY", ""),
+                                voice_type=voice,
+                                player_name=player_name,
+                                stats=stats if isinstance(stats, dict) else None,
+                            )
+                            st.session_state["video_path"] = video_path
+                            st.success("영상 생성 완료!")
+                        except Exception as e:
+                            st.error(f"영상 생성 실패: {e}")
+
+        with col_regen:
+            if st.button("다시 생성", use_container_width=True):
+                del st.session_state["generated_script"]
+                st.rerun()
+
+        # 영상 미리보기 + 업로드
+        if "video_path" in st.session_state:
+            video_file = Path(st.session_state["video_path"])
+            if video_file.exists():
+                st.divider()
+                st.subheader("생성된 영상")
+                st.video(str(video_file))
+
+                col_dl, col_upload = st.columns(2)
+
+                with col_dl:
+                    with open(video_file, "rb") as f:
+                        st.download_button(
+                            "영상 다운로드 (.mp4)",
+                            data=f,
+                            file_name=f"mlb_shorts_{selected_date}.mp4",
+                            mime="video/mp4",
+                            use_container_width=True,
+                        )
+
+                # YouTube 업로드 섹션
+                if HAS_UPLOAD:
+                    with col_upload:
+                        privacy = st.selectbox(
+                            "공개 설정",
+                            ["private", "unlisted", "public"],
+                            format_func=lambda x: {"private": "비공개", "unlisted": "일부 공개", "public": "전체 공개"}[x],
+                            label_visibility="collapsed",
+                        )
+                        if st.button("YouTube 업로드", type="primary", use_container_width=True):
+                            # 메타데이터 자동 생성
+                            with st.spinner("메타데이터 생성 + YouTube 업로드 중..."):
+                                try:
+                                    news_for_meta = st.session_state.get("selected_news", {})
+                                    meta = generate_metadata(
+                                        API_KEY,
+                                        edited_script,
+                                        headline=news_for_meta.get("headline", ""),
+                                    )
+                                    st.session_state["upload_metadata"] = meta
+
+                                    yt_meta = meta.get("youtube", {})
+                                    result = upload_to_youtube(
+                                        video_path=str(video_file),
+                                        title=yt_meta.get("title", f"MLB 숏폼 - {selected_date}"),
+                                        description=yt_meta.get("description", ""),
+                                        tags=yt_meta.get("tags", []),
+                                        privacy=privacy,
+                                    )
+                                    st.session_state["upload_result"] = result
+
+                                    # 히스토리 저장
+                                    save_history(
+                                        date=selected_date,
+                                        headline=news_for_meta.get("headline", ""),
+                                        video_path=str(video_file),
+                                        upload_result=result,
+                                        metadata=meta,
+                                        tone=tone,
+                                        duration=duration,
+                                    )
+
+                                    st.success(f"업로드 완료! {result['url']}")
+                                    st.balloons()
+                                except FileNotFoundError as e:
+                                    st.error(str(e))
+                                    st.info(
+                                        "YouTube 업로드를 위해 OAuth 설정이 필요합니다:\n\n"
+                                        "1. Google Cloud Console에서 OAuth 2.0 클라이언트 ID 생성\n"
+                                        "2. client_secret.json 파일을 phase-4_integration/ 에 저장\n"
+                                        "3. 다시 업로드 버튼 클릭"
+                                    )
+                                except Exception as e:
+                                    st.error(f"업로드 실패: {e}")
+
+                    # 업로드 결과 표시
+                    if "upload_result" in st.session_state:
+                        result = st.session_state["upload_result"]
+                        st.markdown(f"**YouTube URL:** [{result['url']}]({result['url']})")
+
+                    # 메타데이터 미리보기
+                    if "upload_metadata" in st.session_state:
+                        meta = st.session_state["upload_metadata"]
+                        with st.expander("생성된 메타데이터"):
+                            yt = meta.get("youtube", {})
+                            st.markdown(f"**YouTube 제목:** {yt.get('title', '')}")
+                            st.markdown(f"**설명:** {yt.get('description', '')}")
+                            st.markdown(f"**태그:** {', '.join(yt.get('tags', []))}")
+
+                            ig = meta.get("instagram", {})
+                            if ig:
+                                st.markdown(f"**Instagram:** {ig.get('caption', '')}")
+
+                            tw = meta.get("twitter", {})
+                            if tw:
+                                st.markdown(f"**Twitter:** {tw.get('tweet_text', '')}")
+
+
+# ── 페이지 3: 저장된 대본 ──
+elif page == "저장된 대본":
+    st.header("저장된 대본")
+
+    scripts = get_scripts(selected_date)
+    if not scripts:
+        st.info("저장된 대본이 없습니다. '대본 생성' 메뉴에서 대본을 만들어보세요.")
+        st.stop()
+
+    for i, s in enumerate(scripts):
+        meta = s.get("_meta", {})
+        with st.expander(f"{meta.get('news_headline', '제목 없음')} | {meta.get('tone', '')} {meta.get('duration', '')}초"):
+            st.markdown(f"**훅:** {s.get('hook', '')}")
+            st.write(s.get("full_script", ""))
+            tags = s.get("suggested_hashtags", [])
+            if tags:
+                st.caption(" ".join(tags))
+            st.caption(f"파일: {s.get('_filename', '')}")
+
+
+# ── 페이지 4: 히스토리 ──
+elif page == "히스토리":
+    st.header("영상 히스토리")
+
+    history = get_history(limit=30)
+    if not history:
+        st.info("생성/업로드된 영상이 없습니다.")
+        st.stop()
+
+    for entry in history:
+        upload = entry.get("upload")
+        upload_badge = ""
+        if upload and upload.get("url"):
+            upload_badge = f' | <a href="{upload["url"]}" target="_blank">YouTube</a>'
+
+        st.markdown(f"""
+        <div class="history-card">
+            <strong>{entry.get('date', '')}</strong> - {entry.get('headline', '제목 없음')}
+            <span style="color:#888; margin-left:8px;">{entry.get('tone', '')} {entry.get('duration', '')}초</span>
+            {upload_badge}
+            <p style="font-size:12px; color:#888; margin-top:4px;">
+                {entry.get('created_at', '')[:19]}
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        video_path = entry.get("video_path", "")
+        if video_path and Path(video_path).exists():
+            col1, col2 = st.columns([3, 1])
+            with col2:
+                with open(video_path, "rb") as f:
+                    st.download_button(
+                        "다운로드",
+                        data=f,
+                        file_name=Path(video_path).name,
+                        mime="video/mp4",
+                        key=f"dl_{entry.get('_filename', '')}",
+                    )
+</file>
+
+<file path="PLAN.md">
+# MLB Daily AI Creator - 프로젝트 계획
+
+## 프로젝트 개요
+매일 MLB 뉴스를 자동 수집하고, AI 대본 생성, 영상 제작, YouTube 업로드까지 원스톱 처리하는 콘텐츠 자동화 시스템.
+
+## 아키텍처
+
+```
+Phase 1              Phase 2              Phase 3              Phase 4
+Research          →  Script Gen        →  Video Production  →  Upload + Integration
+(Gemini + Gmail)    (Streamlit UI)       (TTS + MoviePy)      (YouTube API)
+```
+
+**전체 파이프라인 (원클릭):**
+```
+뉴스 수집 → 대본 생성 → TTS 음성 → 배경 영상 → 자막/그래픽 합성 → 메타데이터 → YouTube 업로드
+```
+
+---
+
+## Phase 1: Research Automation [완료]
+
+**목적:** Gemini API로 매일 MLB 뉴스를 자동 수집하여 이메일로 전송
+
+| 항목 | 내용 |
+|------|------|
+| AI | Gemini 2.0 Flash + Google Search grounding |
+| 자동화 | GitHub Actions (cron: 매일 KST 08:00) |
+| 전송 | smtplib + Gmail 앱 비밀번호 |
+| 비용 | $0/월 |
+
+**구현 파일:**
+- `phase-1_research-automation/src/main.py` — 파이프라인 진입점
+- `phase-1_research-automation/src/researcher.py` — Gemini 리서치 엔진
+- `phase-1_research-automation/src/formatter.py` — JSON → HTML 변환
+- `phase-1_research-automation/src/notifier.py` — Gmail 전송
+
+---
+
+## Phase 2: App Prototype + Script Generation [완료]
+
+**목적:** Streamlit 대시보드로 뉴스 확인 + AI 대본 생성 + 전체 파이프라인 UI
+
+| 항목 | 내용 |
+|------|------|
+| UI | Streamlit |
+| 대본 AI | Gemini 2.0 Flash Lite |
+| 톤 옵션 | 유머/분석/열정 (3종) |
+| 길이 옵션 | 30초/45초/60초 |
+
+**구현 파일:**
+- `phase-2_app-prototype/app.py` — Streamlit 메인 앱 (4개 페이지)
+- `phase-2_app-prototype/script_generator.py` — AI 대본 생성
+- `phase-2_app-prototype/data_store.py` — 뉴스/대본 파일 관리
+
+**페이지 구성:**
+1. 원클릭 자동 생성 (전체 파이프라인)
+2. 뉴스 대시보드
+3. 대본 생성/편집
+4. 업로드 히스토리
+
+---
+
+## Phase 3: Video Pipeline [완료]
+
+**목적:** 대본 텍스트로부터 완전 자동화된 숏폼 영상 제작
+
+| 항목 | 내용 |
+|------|------|
+| TTS | Edge TTS (한국어: InJoonNeural/SunHiNeural) |
+| 배경 | Pexels API (야구 관련 세로 영상) |
+| 합성 | MoviePy (1080x1920, 30fps) |
+| 그래픽 | Pillow (선수 스탯 카드) |
+| 자막 | SRT 파싱 + 15자 그룹핑 |
+
+**구현 파일:**
+- `phase-3_video-pipeline/src/video_pipeline.py` — 영상 생성 오케스트레이터
+- `phase-3_video-pipeline/src/tts_engine.py` — Edge TTS + 자막 생성
+- `phase-3_video-pipeline/src/background.py` — Pexels 배경 다운로드
+- `phase-3_video-pipeline/src/composer.py` — MoviePy 영상 합성
+- `phase-3_video-pipeline/src/graphics.py` — 스탯 카드 생성
+- `phase-3_video-pipeline/src/subtitle.py` — SRT 파싱
+
+---
+
+## Phase 4: Full Integration + YouTube Upload [완료]
+
+**목적:** 전체 파이프라인 통합 + YouTube 자동 업로드 + 메타데이터 생성
+
+| 항목 | 내용 |
+|------|------|
+| 업로드 | YouTube Data API v3 + OAuth 2.0 |
+| 메타데이터 | Gemini 자동 생성 (YouTube/Instagram/Twitter) |
+| 히스토리 | JSON 파일 기반 업로드 기록 |
+| 콜백 | Streamlit UI 연동용 진행 상태 콜백 |
+
+**구현 파일:**
+- `phase-4_integration/src/full_pipeline.py` — 6단계 통합 오케스트레이터
+- `phase-4_integration/src/youtube_uploader.py` — YouTube API 업로더
+- `phase-4_integration/src/metadata_generator.py` — 멀티 플랫폼 메타데이터
+- `phase-4_integration/src/pipeline_config.py` — 통합 환경변수 로더
+- `phase-4_integration/src/history.py` — 업로드 히스토리 관리
+
+**파이프라인 6단계:**
+1. Research (뉴스 수집)
+2. Script (대본 생성)
+3. Video (영상 제작)
+4. Metadata (메타데이터 생성)
+5. Upload (YouTube 업로드)
+6. History (기록 저장)
+
+---
+
+## 기술 스택
+
+| 영역 | 기술 | 용도 |
+|------|------|------|
+| AI/LLM | Gemini API (2.0 Flash / Flash Lite) | 리서치, 대본, 메타데이터 |
+| TTS | Edge TTS | 한국어 음성 합성 (무료) |
+| 영상 합성 | MoviePy | 배경 + 자막 + 오디오 합성 |
+| 그래픽 | Pillow | 스탯 카드 이미지 |
+| 배경 영상 | Pexels API | CC 라이선스 야구 영상 |
+| 웹 UI | Streamlit | 대시보드 + 원클릭 파이프라인 |
+| 이메일 | smtplib + Gmail | 뉴스 브리핑 전송 |
+| 업로드 | YouTube Data API v3 | 영상 업로드 |
+| CI/CD | GitHub Actions | Phase 1 일일 자동화 |
+| 데이터 | JSON 파일 | 뉴스, 대본, 히스토리 저장 |
+
+## 월간 비용: $0
+모든 API의 무료 티어 내에서 운영 가능.
+</file>
+
+<file path=".github/workflows/mlb-daily.yml">
+name: MLB Daily Research
+
+on:
+  schedule:
+    - cron: '0 22 * * *'
+  workflow_dispatch:
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: phase-1_research-automation
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run MLB Daily Research
+        run: python src/main.py
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GMAIL_ADDRESS: ${{ secrets.GMAIL_ADDRESS }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+
+      - name: Upload research output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mlb-research-${{ github.run_number }}
+          path: phase-1_research-automation/outputs/
+          retention-days: 30
+</file>
+
+</files>

@@ -1,6 +1,6 @@
 """
 MLB Daily AI Creator - 전체 파이프라인 오케스트레이터
-리서치 → 대본 → 영상 → 메타데이터 → YouTube 업로드 → 히스토리 저장
+DB조회 → 대본 → 영상 → 메타데이터 → YouTube 업로드 → 히스토리 저장
 
 Usage:
     python full_pipeline.py --auto --tone 유머러스 --duration 30 --voice male --privacy private
@@ -16,6 +16,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Callable
+from supabase import create_client, Client
 
 # Windows 한글 출력 대응 (이미 래핑된 경우 스킵)
 if sys.platform == "win32":
@@ -28,7 +29,7 @@ if sys.platform == "win32":
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
 # 각 Phase src를 import 경로에 추가
-sys.path.insert(0, str(PROJECT_ROOT / "phase-1_research-automation" / "src"))
+# sys.path.insert(0, str(PROJECT_ROOT / "phase-1_research-automation" / "src")) # 의존성 제거
 sys.path.insert(0, str(PROJECT_ROOT / "phase-2_app-prototype"))
 sys.path.insert(0, str(PROJECT_ROOT / "phase-3_video-pipeline" / "src"))
 sys.path.insert(0, str(PROJECT_ROOT / "phase-4_integration" / "src"))
@@ -50,7 +51,7 @@ class PipelineOptions:
     news_rank: int = 1          # 뉴스 순위 (1-based)
     privacy: str = "private"    # YouTube 공개 설정
     skip_upload: bool = False
-    skip_email: bool = False
+    # skip_email: bool = False # 의존성 제거
 
 
 @dataclass
@@ -85,23 +86,27 @@ def _print_callback(stage: str, status: str, message: str) -> None:
 
 # ── 개별 스테이지 ──
 
-def stage_research(config: dict, callback: StageCallback) -> dict:
-    """Phase 1: MLB 뉴스 리서치."""
-    callback("research", "start", "MLB 뉴스 수집 중...")
+def stage_fetch_news(config: dict, callback: StageCallback) -> dict:
+    """Supabase에서 오늘 날짜의 뉴스 데이터 조회."""
+    callback("research", "start", "Supabase에서 뉴스 데이터 조회 중...")
+    
+    url = config.get("SUPABASE_URL")
+    key = config.get("SUPABASE_SERVICE_KEY")
+    
+    if not url or not key:
+        raise ValueError("SUPABASE_URL and SUPABASE_SERVICE_KEY must be set in environment variables.")
 
-    from researcher import research_mlb_news
-    news_data = research_mlb_news(config["GEMINI_API_KEY"])
-
-    # 리서치 결과 파일 저장
-    out_dir = PROJECT_ROOT / "phase-1_research-automation" / "outputs"
-    out_dir.mkdir(exist_ok=True)
-    today = datetime.now().strftime("%Y-%m-%d")
-    out_file = out_dir / f"{today}.json"
-    with open(out_file, "w", encoding="utf-8") as f:
-        json.dump(news_data, f, ensure_ascii=False, indent=2)
-
-    count = len(news_data.get("top_news", []))
-    callback("research", "done", f"뉴스 {count}건 수집 완료")
+    supabase: Client = create_client(url, key)
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    
+    response = supabase.table("mlb_news").select("*").eq("date", today_str).single().execute()
+    
+    if not response.data:
+        raise FileNotFoundError(f"Supabase에 오늘 날짜({today_str})의 뉴스 데이터가 없습니다.")
+        
+    news_data = response.data
+    count = len(news_data.get("news", {}).get("main_news", []))
+    callback("research", "done", f"뉴스 {count}건 조회 완료")
     return news_data
 
 
@@ -237,7 +242,7 @@ def run_full_pipeline(
     result = PipelineResult()
 
     # 필수 키 검증
-    required = ["GEMINI_API_KEY"]
+    required = ["GEMINI_API_KEY", "SUPABASE_URL", "SUPABASE_SERVICE_KEY"]
     if not options.skip_upload:
         pass  # YouTube는 OAuth 기반, API 키 불필요
     missing = validate_config(config, required)
@@ -246,30 +251,31 @@ def run_full_pipeline(
         callback("config", "error", f"환경변수 누락: {', '.join(missing)}")
         return result
 
-    # ── Stage 1: Research ──
+    # ── Stage 1: Fetch News (from Supabase) ──
     try:
-        news_data = stage_research(config, callback)
+        news_data = stage_fetch_news(config, callback)
         result.news_data = news_data
         result.stages_completed.append("research")
     except Exception as e:
-        result.errors.append(f"리서치 실패: {e}")
-        callback("research", "error", f"리서치 실패: {e}")
+        result.errors.append(f"뉴스 조회 실패: {e}")
+        callback("research", "error", f"뉴스 조회 실패: {e}")
         return result
 
     # 뉴스 선택
-    top_news = news_data.get("top_news", [])
-    if not top_news:
+    main_news = news_data.get("news", {}).get("main_news", [])
+    if not main_news:
         result.errors.append("수집된 뉴스가 없습니다")
-        callback("research", "error", "수집된 뉴스가 없습니다")
+        callback("research", "error", "수집된 메인 뉴스가 없습니다")
         return result
 
-    rank_idx = min(options.news_rank - 1, len(top_news) - 1)
+    rank_idx = min(options.news_rank - 1, len(main_news) - 1)
     rank_idx = max(0, rank_idx)
-    selected_news = top_news[rank_idx]
+    selected_news = main_news[rank_idx]
     result.selected_news = selected_news
 
     # ── Stage 2: Script ──
     try:
+        # 대본 생성 시 전체 뉴스 데이터(트랜잭션 등)를 함께 전달할 수 있도록 확장 가능
         script = stage_script(config, selected_news, options, callback)
         result.script = script
         result.stages_completed.append("script")
@@ -347,7 +353,7 @@ def main():
     parser.add_argument("--privacy", type=str, default="private",
                         choices=["private", "unlisted", "public"], help="YouTube 공개 설정")
     parser.add_argument("--skip-upload", action="store_true", help="YouTube 업로드 스킵")
-    parser.add_argument("--skip-email", action="store_true", help="이메일 발송 스킵")
+    # parser.add_argument("--skip-email", action="store_true", help="이메일 발송 스킵") # 의존성 제거
     args = parser.parse_args()
 
     if not args.auto:
@@ -370,7 +376,7 @@ def main():
         news_rank=args.news_rank,
         privacy=args.privacy,
         skip_upload=args.skip_upload,
-        skip_email=args.skip_email,
+        # skip_email=args.skip_email, # 의존성 제거
     )
 
     result = run_full_pipeline(options, callback=_print_callback)
